@@ -1,0 +1,18 @@
+# Local container run of the Next.js app.
+#
+# Supabase is NOT included here: use the Supabase CLI (`supabase start`) for the
+# local database/auth/storage stack. Point NEXT_PUBLIC_SUPABASE_URL at the CLI
+# instance (default http://localhost:54321) via a .env file.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    restart: unless-stopped

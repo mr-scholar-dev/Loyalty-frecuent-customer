@@ -1,0 +1,5 @@
+-- Development seed data.
+--
+-- Intentionally empty in Phase 0: no business tables exist yet.
+-- Organizations, branches, a default loyalty program and demo customers are
+-- seeded starting in Phase 1 (schema) / Phase 2 (auth & orgs).
