@@ -13,6 +13,7 @@ export async function getCurrentUser(): Promise<User | null> {
 export interface ActiveMembership {
   organizationId: string;
   organizationName: string;
+  organizationSlug: string;
   role: string;
 }
 
@@ -38,13 +39,14 @@ export async function getActiveMembership(): Promise<ActiveMembership | null> {
 
   const { data: org } = await supabase
     .from("organizations")
-    .select("name")
+    .select("name, slug")
     .eq("id", membership.organization_id)
     .maybeSingle();
 
   return {
     organizationId: membership.organization_id,
     organizationName: org?.name ?? "",
+    organizationSlug: org?.slug ?? "",
     role: membership.role,
   };
 }

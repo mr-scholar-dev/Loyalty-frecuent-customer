@@ -7,6 +7,7 @@ import {
   Download,
   LayoutDashboard,
   ListChecks,
+  QrCode,
   ScanLine,
   ScrollText,
   Users,
@@ -23,6 +24,7 @@ interface NavItem {
 const ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/scan", label: "Escanear", icon: ScanLine },
+  { href: "/dashboard/qr", label: "QR registro", icon: QrCode },
   { href: "/dashboard/customers", label: "Clientes", icon: Users },
   { href: "/dashboard/visits", label: "Visitas", icon: ListChecks },
   { href: "/dashboard/audit", label: "Auditoría", icon: ScrollText },
