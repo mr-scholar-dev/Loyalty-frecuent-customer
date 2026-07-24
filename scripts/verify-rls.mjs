@@ -124,7 +124,10 @@ try {
     .update({ paid_visits_in_cycle: 999 })
     .eq("membership_id", aBalance.membership_id)
     .select("membership_id");
-  check("Balance NO editable directamente (ni por owner)", (balW ?? []).length === 0);
+  check(
+    "Balance NO editable directamente (ni por owner)",
+    (balW ?? []).length === 0,
+  );
 } catch (e) {
   check(`Sesión owner (${e.message})`, false);
 }
@@ -140,7 +143,10 @@ try {
   check("Employee NO puede modificar el programa", (progW ?? []).length === 0);
 
   const { data: custs } = await clientEmp.from("customers").select("id");
-  check("Employee sí ve clientes de su organización", (custs ?? []).length >= 1);
+  check(
+    "Employee sí ve clientes de su organización",
+    (custs ?? []).length >= 1,
+  );
 } catch (e) {
   check(`Sesión employee (${e.message}) — revisa credenciales`, false);
 }

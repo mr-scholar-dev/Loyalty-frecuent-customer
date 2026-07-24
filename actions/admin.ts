@@ -2,17 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { issuePublicToken } from "@/lib/security/token";
 
 /**
- * Admin membership actions (§7 Fase 7, §Flujo G), backed by Supabase.
+ * Admin membership actions (§7 Fase 7, §Flujo G).
  *
- * Status changes and reissue run under the employee's session (RLS enforces the
- * owner/manager write policy); the audit row is written with the admin client
- * (audit_logs has no client insert policy). Reversal uses the transactional
- * `reverse_last_visit` RPC. A future improvement is dedicated SECURITY DEFINER
- * RPCs for block/reactivate/reissue so the audit is part of the same tx.
+ * All go through transactional SECURITY DEFINER RPCs that authorize the caller
+ * (owner/manager) and write the audit row in the same transaction. Called under
+ * the user's session so auth.uid() is the acting user.
  */
 
 export type AdminActionResult =
@@ -33,43 +30,24 @@ function revalidate(id: string): void {
   revalidatePath("/dashboard");
 }
 
-async function writeAudit(
-  organizationId: string,
-  action: string,
-  entityId: string,
-  after: Record<string, unknown>,
-): Promise<void> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const admin = createAdminClient();
-  await admin.from("audit_logs").insert({
-    organization_id: organizationId,
-    actor_user_id: user?.id ?? null,
-    action,
-    entity_type: "membership",
-    entity_id: entityId,
-    after_data: after,
-  });
+function mapReason(
+  message: string,
+): Extract<AdminActionResult, { ok: false }>["reason"] {
+  if (/not_authorized|permission|denied/i.test(message))
+    return "not_authorized";
+  return "error";
 }
 
 async function setStatus(
   membershipId: string,
   status: "blocked" | "active",
-  action: string,
-  note: string,
 ): Promise<AdminActionResult> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("memberships")
-    .update({ status })
-    .eq("id", membershipId)
-    .select("id, organization_id");
-  if (error) return { ok: false, reason: "error" };
-  const row = data?.[0];
-  if (!row) return { ok: false, reason: "not_authorized" };
-  await writeAudit(row.organization_id, action, membershipId, { note });
+  const { error } = await supabase.rpc("set_membership_status", {
+    p_membership_id: membershipId,
+    p_status: status,
+  });
+  if (error) return { ok: false, reason: mapReason(error.message) };
   revalidate(membershipId);
   return { ok: true };
 }
@@ -77,23 +55,13 @@ async function setStatus(
 export async function blockAction(
   membershipId: string,
 ): Promise<AdminActionResult> {
-  return setStatus(
-    membershipId,
-    "blocked",
-    "membership.block",
-    "Tarjeta bloqueada",
-  );
+  return setStatus(membershipId, "blocked");
 }
 
 export async function reactivateAction(
   membershipId: string,
 ): Promise<AdminActionResult> {
-  return setStatus(
-    membershipId,
-    "active",
-    "membership.reactivate",
-    "Tarjeta reactivada",
-  );
+  return setStatus(membershipId, "active");
 }
 
 /** Reissue the card: mint a new token, revoking the previous one. */
@@ -102,59 +70,34 @@ export async function reissueAction(
 ): Promise<ReissueResult> {
   const issued = issuePublicToken();
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("memberships")
-    .update({
-      public_token_hash: issued.hash,
-      public_token_prefix: issued.prefix,
-    })
-    .eq("id", membershipId)
-    .select("id, organization_id");
-  if (error) return { ok: false, reason: "error" };
-  const row = data?.[0];
-  if (!row) return { ok: false, reason: "not_authorized" };
-  await writeAudit(row.organization_id, "membership.reissue", membershipId, {
-    note: "Tarjeta reemitida (token anterior revocado)",
+  const { error } = await supabase.rpc("reissue_membership", {
+    p_membership_id: membershipId,
+    p_new_hash: issued.hash,
+    p_new_prefix: issued.prefix,
   });
+  if (error) {
+    return {
+      ok: false,
+      reason: /not_authorized|permission|denied/i.test(error.message)
+        ? "not_authorized"
+        : "error",
+    };
+  }
   revalidate(membershipId);
   return { ok: true, newToken: issued.token };
 }
 
-/**
- * Archive (soft-delete) or restore a customer. Archiving also blocks the card;
- * restoring reactivates it. Never hard-deletes — preserves ledger + audit.
- */
+/** Archive (soft-delete) or restore a customer — preserves ledger + audit. */
 async function setArchived(
   membershipId: string,
   archived: boolean,
 ): Promise<AdminActionResult> {
   const supabase = await createClient();
-  const { data: m } = await supabase
-    .from("memberships")
-    .select("id, customer_id, organization_id")
-    .eq("id", membershipId)
-    .maybeSingle();
-  if (!m) return { ok: false, reason: "not_authorized" };
-
-  const { data: cust, error: cErr } = await supabase
-    .from("customers")
-    .update({ status: archived ? "archived" : "active" })
-    .eq("id", m.customer_id)
-    .select("id");
-  if (cErr) return { ok: false, reason: "error" };
-  if (!cust?.length) return { ok: false, reason: "not_authorized" };
-
-  await supabase
-    .from("memberships")
-    .update({ status: archived ? "blocked" : "active" })
-    .eq("id", membershipId);
-
-  await writeAudit(
-    m.organization_id,
-    archived ? "customer.archive" : "customer.unarchive",
-    membershipId,
-    { note: archived ? "Cliente archivado" : "Cliente restaurado" },
-  );
+  const { error } = await supabase.rpc("set_customer_archived", {
+    p_membership_id: membershipId,
+    p_archived: archived,
+  });
+  if (error) return { ok: false, reason: mapReason(error.message) };
   revalidate(membershipId);
   return { ok: true };
 }
