@@ -8,6 +8,7 @@ import {
 import { normalizePlate } from "@/lib/normalization/plate";
 import { normalizePhone } from "@/lib/normalization/phone";
 import { enrollCustomer } from "@/lib/loyalty/queries";
+import { getClientIp, rateLimit } from "@/lib/security/rate-limit";
 
 export interface EnrollmentError {
   ok: false;
@@ -27,6 +28,15 @@ export async function enroll(
   slug: string,
   input: EnrollmentInput,
 ): Promise<EnrollmentError> {
+  // Rate limit public enrollment per IP (§12).
+  const ip = await getClientIp();
+  if (!rateLimit(`enroll:${ip}`, 8, 10 * 60_000).ok) {
+    return {
+      ok: false,
+      message: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+    };
+  }
+
   const parsed = enrollmentSchema.safeParse(input);
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors;

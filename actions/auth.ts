@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getClientIp, rateLimit } from "@/lib/security/rate-limit";
 
 export interface LoginState {
   error?: string;
@@ -16,6 +17,12 @@ export async function login(
   const password = String(formData.get("password") ?? "");
   if (!email || !password) {
     return { error: "Ingresa correo y contraseña." };
+  }
+
+  // Throttle login attempts per IP (in addition to Supabase's own limits).
+  const ip = await getClientIp();
+  if (!rateLimit(`login:${ip}`, 10, 5 * 60_000).ok) {
+    return { error: "Demasiados intentos. Espera unos minutos." };
   }
 
   const supabase = await createClient();
