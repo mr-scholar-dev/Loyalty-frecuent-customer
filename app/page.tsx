@@ -12,6 +12,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { WHATSAPP_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const features = [
@@ -260,7 +261,7 @@ export default function HomePage() {
                   Ver demo en vivo
                 </Link>
                 <a
-                  href="https://wa.me/50661511306"
+                  href={WHATSAPP_URL}
                   target="_blank"
                   rel="noreferrer"
                   className={cn(

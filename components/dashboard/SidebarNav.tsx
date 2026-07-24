@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Building2,
+  CreditCard,
   Download,
   Gift,
+  KanbanSquare,
   LayoutDashboard,
   ListChecks,
   QrCode,
@@ -31,11 +33,13 @@ const ITEMS: NavItem[] = [
   { href: "/dashboard/qr", label: "QR registro", icon: QrCode },
   { href: "/dashboard/customers", label: "Clientes", icon: Users },
   { href: "/dashboard/team", label: "Equipo", icon: UsersRound },
+  { href: "/dashboard/kanban", label: "Kanban", icon: KanbanSquare },
   { href: "/dashboard/visits", label: "Visitas", icon: ListChecks },
   { href: "/dashboard/audit", label: "Auditoría", icon: ScrollText },
   { href: "/dashboard/exports", label: "Exportar", icon: Download },
   { href: "/dashboard/branches", label: "Sucursales", icon: Building2 },
   { href: "/dashboard/program", label: "Programa", icon: Gift },
+  { href: "/dashboard/billing", label: "Facturación", icon: CreditCard },
   { href: "/dashboard/settings", label: "Ajustes", icon: Settings },
 ];
 

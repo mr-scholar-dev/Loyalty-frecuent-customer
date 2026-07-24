@@ -1,8 +1,9 @@
 import { Check } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CONTACT_PHONE, PRO_PRICE_USD, WHATSAPP_URL } from "@/lib/site";
 
-const CONTACT_HREF = "https://wa.me/50661511306";
+const CONTACT_HREF = WHATSAPP_URL;
 const CONTACT_LABEL = "Comunícate con nosotros";
 
 interface Plan {
@@ -17,7 +18,7 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     name: "Pro",
-    price: "$40",
+    price: `$${PRO_PRICE_USD}`,
     period: "/mes",
     tagline: "Todo lo que tu servicentro necesita.",
     features: [
@@ -102,7 +103,7 @@ export function PricingCards() {
             {CONTACT_LABEL}
           </a>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            +506 6151 1306
+            {CONTACT_PHONE}
           </p>
         </div>
       ))}

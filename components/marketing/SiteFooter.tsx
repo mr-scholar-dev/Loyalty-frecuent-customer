@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Droplets } from "lucide-react";
+import { CONTACT_PHONE, WHATSAPP_URL } from "@/lib/site";
 
 const linkClass = "hover:text-foreground";
 
@@ -69,8 +70,13 @@ export function SiteFooter() {
             <p className="text-sm font-semibold">Contacto</p>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="mailto:ventas@loyaltyweb.cr" className={linkClass}>
-                  ventas@loyaltyweb.cr
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={linkClass}
+                >
+                  WhatsApp {CONTACT_PHONE}
                 </a>
               </li>
             </ul>
