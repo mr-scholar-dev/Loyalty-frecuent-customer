@@ -101,7 +101,10 @@ SaaS (Stripe), programas por monto, cupones, referidos, marketing, marca blanca.
   FKs, constraints, helpers y políticas RLS), `seed.sql` y tests pgTAP en
   `supabase/tests/`. Validar con `supabase db reset` + `supabase test db`.
 - Fase 2 — Auth y organizaciones.
-- Fase 3 — Fidelización (ledger, balance, RPC visita/recompensa, reversión, idempotencia, auditoría).
+- Fase 3 — Fidelización: **RPC SQL preparados, sin verificar**
+  (`register_paid_visit`, `redeem_reward`, `reverse_last_visit` en
+  `supabase/migrations/…_rpc_loyalty.sql`; test pgTAP `rpc_loyalty.test.sql`).
+  Falta conectarlos desde la app (reemplazar `demo-store`).
 - Fase 4 — Registro público.
 - Fase 5 — Tarjeta digital + PWA.
 - Fase 6 — Escáner QR.
