@@ -4,12 +4,15 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Building2,
   Download,
+  Gift,
   LayoutDashboard,
   ListChecks,
   QrCode,
   ScanLine,
   ScrollText,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -29,6 +32,9 @@ const ITEMS: NavItem[] = [
   { href: "/dashboard/visits", label: "Visitas", icon: ListChecks },
   { href: "/dashboard/audit", label: "Auditoría", icon: ScrollText },
   { href: "/dashboard/exports", label: "Exportar", icon: Download },
+  { href: "/dashboard/branches", label: "Sucursales", icon: Building2 },
+  { href: "/dashboard/program", label: "Programa", icon: Gift },
+  { href: "/dashboard/settings", label: "Ajustes", icon: Settings },
 ];
 
 export function SidebarNav() {
