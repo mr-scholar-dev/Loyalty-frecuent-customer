@@ -14,6 +14,7 @@ import {
   ScrollText,
   Settings,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const ITEMS: NavItem[] = [
   { href: "/dashboard/scan", label: "Escanear", icon: ScanLine },
   { href: "/dashboard/qr", label: "QR registro", icon: QrCode },
   { href: "/dashboard/customers", label: "Clientes", icon: Users },
+  { href: "/dashboard/team", label: "Equipo", icon: UsersRound },
   { href: "/dashboard/visits", label: "Visitas", icon: ListChecks },
   { href: "/dashboard/audit", label: "Auditoría", icon: ScrollText },
   { href: "/dashboard/exports", label: "Exportar", icon: Download },
