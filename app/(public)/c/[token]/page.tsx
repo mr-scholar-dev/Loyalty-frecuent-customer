@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { MembershipStatus } from "@/types/domain";
-import { getSampleCardView } from "@/lib/loyalty/sample";
+import { resolveCardView } from "@/lib/loyalty/demo-store";
 import { generateQrAssets } from "@/lib/qr/generate";
 import { LoyaltyCard } from "@/components/loyalty-card/LoyaltyCard";
 
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
  */
 export default async function CardPage({ params }: PageProps) {
   const { token } = await params;
-  const card = getSampleCardView(token);
+  const card = resolveCardView(token);
 
   if (!card) {
     notFound();

@@ -21,6 +21,33 @@ export default function HomePage() {
       </div>
 
       <div className="rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
+        <p className="font-medium">Registro público (demostración)</p>
+        <p className="mb-3 text-muted-foreground">
+          Landing e inscripción de un servicentro de ejemplo:
+        </p>
+        <ul className="space-y-1">
+          <li>
+            <Link
+              href="/el-sol"
+              className="font-medium text-primary underline underline-offset-4"
+            >
+              /el-sol
+            </Link>{" "}
+            — landing e inscripción (Auto Lavado El Sol)
+          </li>
+          <li>
+            <Link
+              href="/la-bandera"
+              className="font-medium text-primary underline underline-offset-4"
+            >
+              /la-bandera
+            </Link>{" "}
+            — otro servicentro (Servicentro La Bandera)
+          </li>
+        </ul>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
         <p className="font-medium">Tarjeta digital (demostración)</p>
         <p className="mb-3 text-muted-foreground">
           Ejemplos de la tarjeta pública del cliente con datos ficticios:
