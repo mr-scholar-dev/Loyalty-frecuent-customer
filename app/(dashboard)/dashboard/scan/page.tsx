@@ -24,20 +24,12 @@ export default function ScanPage() {
       <ScanConsole />
 
       <div className="mt-8 rounded-lg border bg-muted/40 p-4 text-xs text-muted-foreground">
-        <p className="mb-1 font-semibold text-foreground">
-          Tokens de prueba (demo)
+        <p className="mb-1 font-semibold text-foreground">Cómo probar</p>
+        <p>
+          Escanea el QR de una tarjeta o pega su token/enlace. Prueba con{" "}
+          <code>demo</code> (María, 3/9) o con el enlace de una tarjeta recién
+          registrada. Solo verás tarjetas de tu organización.
         </p>
-        <ul className="space-y-0.5">
-          <li>
-            <code>demo</code> — progreso 3/9
-          </li>
-          <li>
-            <code>demo-reward</code> — con recompensa disponible
-          </li>
-          <li>
-            <code>demo-blocked</code> — tarjeta bloqueada
-          </li>
-        </ul>
       </div>
     </main>
   );

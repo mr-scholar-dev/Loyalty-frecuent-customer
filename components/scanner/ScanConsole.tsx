@@ -12,7 +12,7 @@ import {
 import type {
   MutationResult,
   StaffMembershipView,
-} from "@/lib/loyalty/demo-store";
+} from "@/lib/loyalty/scan-types";
 import {
   lookupMembership,
   registerVisitAction,
@@ -35,7 +35,8 @@ const ERROR_MESSAGES: Record<
   not_found: "No se encontró la membresía.",
   blocked: "La tarjeta está bloqueada.",
   no_reward: "No hay recompensas disponibles para canjear.",
-  duplicate: "Operación ya registrada (evitado duplicado).",
+  not_authorized: "No tienes permiso para esta operación.",
+  error: "No se pudo completar la operación.",
 };
 
 function newIdempotencyKey(): string {
@@ -68,13 +69,13 @@ export function ScanConsole() {
   function runAction(action: PendingAction) {
     if (!view || !action) return;
     const key = newIdempotencyKey();
-    const token = view.token;
+    const membershipId = view.membershipId;
     setConfirming(null);
     startTransition(async () => {
       const result: MutationResult =
         action === "visit"
-          ? await registerVisitAction(token, key)
-          : await redeemRewardAction(token, key);
+          ? await registerVisitAction(membershipId, key)
+          : await redeemRewardAction(membershipId, key);
 
       if (result.ok) {
         setView(result.view);
