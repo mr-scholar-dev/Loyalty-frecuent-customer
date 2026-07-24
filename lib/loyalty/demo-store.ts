@@ -9,7 +9,7 @@
  * `register_paid_visit` / `redeem_reward` RPCs in the database phase.
  */
 
-import { MembershipStatus } from "@/types/domain";
+import { LoyaltyEventType, MembershipStatus } from "@/types/domain";
 import {
   buildCardUrl,
   getProgressView,
@@ -30,9 +30,16 @@ import { generatePublicToken } from "@/lib/security/token";
  * bundled server-action and RSC module instances in Next dev (the standard
  * dev-singleton pattern). Still process-local — see the file header caveat.
  */
+interface EventRecord {
+  type: LoyaltyEventType;
+  token: string;
+  at: string;
+}
+
 const globalForStore = globalThis as typeof globalThis & {
   __loyaltyDemoStore?: Map<string, MembershipRecord>;
   __loyaltyIdempotencyKeys?: Set<string>;
+  __loyaltyEvents?: EventRecord[];
 };
 
 function seedStore(): Map<string, MembershipRecord> {
@@ -43,6 +50,28 @@ function seedStore(): Map<string, MembershipRecord> {
   return map;
 }
 
+/**
+ * Seed a small, realistic-looking event history (relative to server "now") so
+ * the demo dashboard is populated. DEMO-ONLY; the real ledger is the DB.
+ */
+function seedEvents(): EventRecord[] {
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
+  const at = (daysAgo: number) => new Date(now - daysAgo * day).toISOString();
+  const V = LoyaltyEventType.VisitEarned;
+  return [
+    { type: V, token: "demo", at: at(0) },
+    { type: V, token: "demo-reward", at: at(0) },
+    { type: V, token: "demo", at: at(1) },
+    { type: LoyaltyEventType.RewardRedeemed, token: "demo-reward", at: at(1) },
+    { type: V, token: "demo-blocked", at: at(2) },
+    { type: V, token: "demo", at: at(4) },
+    { type: LoyaltyEventType.RewardEarned, token: "demo", at: at(4) },
+    { type: V, token: "demo-reward", at: at(6) },
+    { type: V, token: "demo", at: at(9) },
+  ];
+}
+
 const store: Map<string, MembershipRecord> =
   globalForStore.__loyaltyDemoStore ??
   (globalForStore.__loyaltyDemoStore = seedStore());
@@ -51,6 +80,11 @@ const store: Map<string, MembershipRecord> =
 const processedKeys: Set<string> =
   globalForStore.__loyaltyIdempotencyKeys ??
   (globalForStore.__loyaltyIdempotencyKeys = new Set<string>());
+
+/** Append-only event ledger (projection source). DEMO-ONLY. */
+const events: EventRecord[] =
+  globalForStore.__loyaltyEvents ??
+  (globalForStore.__loyaltyEvents = seedEvents());
 
 export interface CreateMembershipInput {
   organization: OrganizationBrand;
@@ -173,6 +207,10 @@ export function registerVisit(
   record.availableRewards = balance.availableRewards;
   record.lastActivityAt = now;
   processedKeys.add(idempotencyKey);
+  events.push({ type: LoyaltyEventType.VisitEarned, token, at: now });
+  if (rewardEarned) {
+    events.push({ type: LoyaltyEventType.RewardEarned, token, at: now });
+  }
 
   return { ok: true, view: toStaffView(token, record), rewardEarned };
 }
@@ -202,6 +240,117 @@ export function redeemReward(
   record.availableRewards = balance.availableRewards;
   record.lastActivityAt = now;
   processedKeys.add(idempotencyKey);
+  events.push({ type: LoyaltyEventType.RewardRedeemed, token, at: now });
 
   return { ok: true, view: toStaffView(token, record) };
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard metrics (§15) — projected from the demo store + event ledger.
+// ---------------------------------------------------------------------------
+
+export interface RecentActivityItem {
+  type: LoyaltyEventType;
+  customerName: string;
+  licensePlate: string;
+  organizationName: string;
+  at: string;
+}
+
+export interface NearRewardItem {
+  customerName: string;
+  licensePlate: string;
+  current: number;
+  required: number;
+}
+
+export interface DashboardMetrics {
+  totalCustomers: number;
+  newCustomersThisMonth: number;
+  washesToday: number;
+  washesThisMonth: number;
+  rewardsEarnedThisMonth: number;
+  rewardsRedeemedThisMonth: number;
+  rewardsPending: number;
+  recentActivity: RecentActivityItem[];
+  nearReward: NearRewardItem[];
+}
+
+function crParts(iso: string): { y: number; m: number; d: number } {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Costa_Rica",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const [y, m, d] = fmt.format(new Date(iso)).split("-").map(Number);
+  return { y: y ?? 0, m: m ?? 0, d: d ?? 0 };
+}
+
+/** Aggregate metrics for the admin dashboard. `nowIso` is server-provided. */
+export function getDashboardMetrics(nowIso: string): DashboardMetrics {
+  const today = crParts(nowIso);
+  const isToday = (iso: string) => {
+    const p = crParts(iso);
+    return p.y === today.y && p.m === today.m && p.d === today.d;
+  };
+  const isThisMonth = (iso: string) => {
+    const p = crParts(iso);
+    return p.y === today.y && p.m === today.m;
+  };
+
+  const memberships = [...store.entries()];
+  const required = DEFAULT_PROGRAM.paidVisitsRequired;
+
+  const recentActivity: RecentActivityItem[] = [...events]
+    .sort((a, b) => (a.at < b.at ? 1 : -1))
+    .slice(0, 8)
+    .map((e) => {
+      const m = store.get(e.token);
+      return {
+        type: e.type,
+        customerName: m?.customerFullName ?? "—",
+        licensePlate: m?.licensePlate ?? "—",
+        organizationName: m?.organization.name ?? "—",
+        at: e.at,
+      };
+    });
+
+  const nearReward: NearRewardItem[] = memberships
+    .filter(
+      ([, m]) =>
+        m.status === MembershipStatus.Active &&
+        m.paidVisitsInCycle === required - 1,
+    )
+    .map(([, m]) => ({
+      customerName: m.customerFullName,
+      licensePlate: m.licensePlate,
+      current: m.paidVisitsInCycle,
+      required,
+    }));
+
+  return {
+    totalCustomers: memberships.length,
+    newCustomersThisMonth: memberships.filter(([, m]) =>
+      isThisMonth(m.joinedAt),
+    ).length,
+    washesToday: events.filter(
+      (e) => e.type === LoyaltyEventType.VisitEarned && isToday(e.at),
+    ).length,
+    washesThisMonth: events.filter(
+      (e) => e.type === LoyaltyEventType.VisitEarned && isThisMonth(e.at),
+    ).length,
+    rewardsEarnedThisMonth: events.filter(
+      (e) => e.type === LoyaltyEventType.RewardEarned && isThisMonth(e.at),
+    ).length,
+    rewardsRedeemedThisMonth: events.filter(
+      (e) => e.type === LoyaltyEventType.RewardRedeemed && isThisMonth(e.at),
+    ).length,
+    rewardsPending: memberships.reduce(
+      (sum, [, m]) => sum + m.availableRewards,
+      0,
+    ),
+    recentActivity,
+    nearReward,
+  };
 }

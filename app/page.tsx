@@ -86,7 +86,14 @@ export default function HomePage() {
       <div className="rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
         <p className="font-medium">Escáner de personal (demostración)</p>
         <p className="text-muted-foreground">
-          Registra lavados y canjea recompensas en{" "}
+          Panel admin en{" "}
+          <Link
+            href="/dashboard"
+            className="font-medium text-primary underline underline-offset-4"
+          >
+            /dashboard
+          </Link>{" "}
+          · registra lavados y canjea en{" "}
           <Link
             href="/dashboard/scan"
             className="font-medium text-primary underline underline-offset-4"
