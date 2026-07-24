@@ -84,6 +84,28 @@ export async function moveCard(
   return { ok: true };
 }
 
+export async function updateCard(
+  cardId: string,
+  patch: { title: string; description: string; assigneeId: string | null },
+): Promise<KanbanResult> {
+  if (!patch.title.trim())
+    return { ok: false, message: "El título es obligatorio." };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("kanban_cards")
+    .update({
+      title: patch.title.trim(),
+      description: patch.description.trim() || null,
+      assignee_id: patch.assigneeId,
+    })
+    .eq("id", cardId)
+    .select("id");
+  if (error || !data?.length)
+    return { ok: false, message: "No se pudo actualizar la tarjeta." };
+  revalidatePath("/dashboard/kanban");
+  return { ok: true };
+}
+
 export async function deleteCard(cardId: string): Promise<KanbanResult> {
   const supabase = await createClient();
   const { error } = await supabase
