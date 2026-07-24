@@ -6,29 +6,29 @@ import { PricingCards } from "@/components/marketing/PricingCards";
 export const metadata: Metadata = {
   title: "Precios",
   description:
-    "Planes de Loyalty Web para servicentros: Gratis, Pro y Empresa. Empieza gratis y crece cuando lo necesites.",
+    "Planes de Loyalty Web para servicentros: Pro (US$40/mes) y Empresa. Comunícate para activar tu cuenta.",
 };
 
 const faqs = [
+  {
+    q: "¿Cuánto cuesta?",
+    a: "El plan Pro cuesta US$40 al mes por servicentro. Empresa es a medida para cadenas o marca blanca.",
+  },
+  {
+    q: "¿Cómo empiezo?",
+    a: "Escríbenos por WhatsApp al +506 6151 1306. Activamos tu servicentro (colores, sucursal y programa) y desde tu panel pagas el plan con tarjeta (Stripe).",
+  },
+  {
+    q: "¿Cómo se paga?",
+    a: "Una vez damos de alta tu servicentro, dentro del panel verás la opción de suscribirte y pagar el plan Pro de forma segura con Stripe.",
+  },
   {
     q: "¿Necesito instalar una app?",
     a: "No. Tus clientes reciben una tarjeta digital como página web con su QR; la guardan en el teléfono. Tu personal opera desde el navegador.",
   },
   {
-    q: "¿Puedo cambiar de plan cuando quiera?",
-    a: "Sí. Puedes empezar en Gratis y pasar a Pro o Empresa en cualquier momento, sin perder tus datos.",
-  },
-  {
     q: "¿Los datos de mi servicentro están seguros?",
     a: "Sí. Cada organización está aislada a nivel de base de datos (RLS), con roles por empleado y auditoría de cada movimiento.",
-  },
-  {
-    q: "¿Cómo defino la promoción?",
-    a: "Tú configuras la regla (por ejemplo, 9 lavados pagados = 1 gratis). El sistema genera y controla la recompensa automáticamente.",
-  },
-  {
-    q: "¿Cómo empiezo?",
-    a: "Escríbenos y montamos tu servicentro (colores, sucursal y programa) el mismo día. También puedes ver la demo en vivo.",
   },
 ];
 
@@ -45,16 +45,16 @@ export default function PreciosPage() {
                 Precios que crecen contigo
               </h1>
               <p className="mt-3 text-lg text-muted-foreground">
-                Sin contratos complicados. Empieza gratis y actualiza cuando tu
-                servicentro lo necesite.
+                Un solo plan, todo incluido. Sin sorpresas. Actívalo cuando tu
+                servicentro esté listo.
               </p>
             </div>
             <div className="mt-12">
               <PricingCards />
             </div>
             <p className="mt-6 text-center text-xs text-muted-foreground">
-              Precios en colones (₡), por servicentro, IVA no incluido. El plan
-              del SaaS se activa al pasar a producción.
+              Precio en dólares (USD), por servicentro. El pago del plan se
+              realiza dentro del panel una vez activada tu cuenta.
             </p>
           </div>
         </section>

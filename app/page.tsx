@@ -12,7 +12,6 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
-import { PricingCards } from "@/components/marketing/PricingCards";
 import { cn } from "@/lib/utils";
 
 const features = [
@@ -240,23 +239,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="border-t bg-muted/20 py-16 lg:py-24">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight">
-                Precios simples
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                Empieza gratis. Crece cuando lo necesites.
-              </p>
-            </div>
-            <div className="mt-12">
-              <PricingCards />
-            </div>
-          </div>
-        </section>
-
         {/* CTA band */}
         <section className="py-16 lg:py-20">
           <div className="mx-auto max-w-4xl px-6">
@@ -278,13 +260,15 @@ export default function HomePage() {
                   Ver demo en vivo
                 </Link>
                 <a
-                  href="mailto:ventas@loyaltyweb.cr?subject=Quiero%20Loyalty%20Web"
+                  href="https://wa.me/50661511306"
+                  target="_blank"
+                  rel="noreferrer"
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground",
                   )}
                 >
-                  Hablar con ventas
+                  Escríbenos por WhatsApp
                 </a>
               </div>
             </div>

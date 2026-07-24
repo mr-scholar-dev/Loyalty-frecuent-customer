@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -40,7 +46,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es-CR" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="es-CR"
+      suppressHydrationWarning
+      className={cn(inter.variable, mono.variable)}
+    >
       <body
         className={cn(
           "min-h-screen bg-background font-sans text-foreground antialiased",
