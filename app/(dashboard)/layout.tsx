@@ -3,6 +3,7 @@ import { Droplets, LogOut } from "lucide-react";
 import { getActiveMembership, getCurrentUser } from "@/lib/supabase/auth";
 import { logout } from "@/actions/auth";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
+import { Copilot } from "@/components/dashboard/Copilot";
 
 /**
  * Admin shell (§15). Shared navigation + signed-in user chip.
@@ -56,7 +57,19 @@ export default async function DashboardLayout({
           </div>
         )}
       </aside>
-      <div className="min-w-0">{children}</div>
+      <div className="flex min-w-0 flex-col">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-background/80 px-4 backdrop-blur">
+          <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
+            <Droplets className="h-5 w-5 text-primary" aria-hidden />
+            <span className="text-sm font-bold">Loyalty Web</span>
+          </Link>
+          <span className="hidden text-xs text-muted-foreground lg:inline">
+            Tu copiloto conoce esta pantalla y puede ayudarte a hacer cosas.
+          </span>
+          <Copilot />
+        </header>
+        <div className="flex-1">{children}</div>
+      </div>
     </div>
   );
 }

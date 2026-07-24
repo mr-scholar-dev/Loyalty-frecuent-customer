@@ -29,8 +29,9 @@ const AGENT_SYSTEM =
   "GESTIONAR el tablero Kanban (crear tareas y asignarlas a empleados) usando " +
   "las herramientas disponibles. Usa herramientas siempre que necesites datos " +
   "reales o para ejecutar una acción; nunca inventes datos. Cuando ejecutes una " +
-  "acción (p. ej. crear una tarea), confírmalo explícitamente. Responde SIEMPRE " +
-  "en español, breve y accionable.";
+  "acción (p. ej. crear una tarea), confírmalo explícitamente. Si se te indica " +
+  "en qué pantalla está el usuario, tenlo en cuenta para ofrecer ayuda relevante " +
+  "a esa sección. Responde SIEMPRE en español, breve y accionable.";
 
 function notConfigured(): AIResult {
   return {
@@ -45,15 +46,22 @@ async function requireOrg(): Promise<string | null> {
 }
 
 /** Agentic assistant: knows the whole app and can act (e.g. create Kanban
- * tasks) via tools. */
-export async function askAssistant(question: string): Promise<AIResult> {
+ * tasks) via tools. `pageContext` describes the screen the user is on. */
+export async function askAssistant(
+  question: string,
+  pageContext?: string,
+): Promise<AIResult> {
   if (!(await requireOrg())) return { ok: false, message: "Sesión no válida." };
   if (!isAIConfigured()) return notConfigured();
   const q = question.trim();
   if (!q) return { ok: false, message: "Escribe una pregunta." };
 
+  const userMessage = pageContext
+    ? `El usuario está en la pantalla: ${pageContext}.\n\n${q}`
+    : q;
+
   try {
-    const { text, didWrite } = await runAgent(AGENT_SYSTEM, q);
+    const { text, didWrite } = await runAgent(AGENT_SYSTEM, userMessage);
     // A tool may have mutated the Kanban board — refresh it.
     if (didWrite) revalidatePath("/dashboard/kanban");
     return { ok: true, text };
