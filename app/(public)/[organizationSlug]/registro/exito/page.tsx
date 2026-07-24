@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
-import { getSampleOrg } from "@/lib/org/sample";
-import { resolveCardView } from "@/lib/loyalty/demo-store";
+import { getOrgBySlug, getCardViewByToken } from "@/lib/loyalty/queries";
+import type { CardView } from "@/lib/loyalty/card";
 import { generateQrAssets } from "@/lib/qr/generate";
 import { LoyaltyCard } from "@/components/loyalty-card/LoyaltyCard";
 
@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+export const dynamic = "force-dynamic";
+
 /** Enrollment success (§14, §10 Flujo B). Shows the freshly issued card. */
 export default async function RegistroExitoPage({
   params,
@@ -24,10 +26,10 @@ export default async function RegistroExitoPage({
 }: PageProps) {
   const { organizationSlug } = await params;
   const { token } = await searchParams;
-  const org = getSampleOrg(organizationSlug);
+  const org = await getOrgBySlug(organizationSlug);
   if (!org) notFound();
 
-  const card = token ? resolveCardView(token) : null;
+  const card = token ? await getCardViewByToken(token) : null;
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-8">
@@ -60,13 +62,7 @@ export default async function RegistroExitoPage({
   );
 }
 
-async function ExitoCard({
-  token,
-  card,
-}: {
-  token: string;
-  card: NonNullable<ReturnType<typeof resolveCardView>>;
-}) {
+async function ExitoCard({ token, card }: { token: string; card: CardView }) {
   const { svg, pngDataUrl } = await generateQrAssets(card.cardUrl);
   return (
     <>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { getSampleOrg } from "@/lib/org/sample";
+import { getOrgBySlug } from "@/lib/loyalty/queries";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,17 +14,15 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { organizationSlug } = await params;
-  const org = getSampleOrg(organizationSlug);
-  return { title: org ? org.brand.name : "Servicentro" };
+  const org = await getOrgBySlug(organizationSlug);
+  return { title: org ? org.name : "Servicentro" };
 }
 
 /** Public landing for a servicentro (§14). */
 export default async function OrganizationLanding({ params }: PageProps) {
   const { organizationSlug } = await params;
-  const org = getSampleOrg(organizationSlug);
-  if (!org) notFound();
-
-  const { brand, program } = org;
+  const brand = await getOrgBySlug(organizationSlug);
+  if (!brand) notFound();
 
   return (
     <main className="min-h-screen px-4 py-10">
@@ -49,14 +47,13 @@ export default async function OrganizationLanding({ params }: PageProps) {
             Acumula lavados y gana premios
           </h1>
           <p className="text-white/90">
-            {program.paidVisitsRequired} lavados pagados y el siguiente es
-            gratis. Inscríbete en menos de dos minutos y recibe tu tarjeta
-            digital.
+            {brand.paidVisitsRequired} lavados pagados y el siguiente es gratis.
+            Inscríbete en menos de dos minutos y recibe tu tarjeta digital.
           </p>
         </div>
 
         <Link
-          href={`/${org.slug}/registro`}
+          href={`/${brand.slug}/registro`}
           className={cn(
             buttonVariants({ variant: "secondary", size: "lg" }),
             "w-full",

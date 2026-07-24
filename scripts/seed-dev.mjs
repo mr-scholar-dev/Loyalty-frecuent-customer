@@ -9,6 +9,7 @@
  * only. Prints the owner login credentials at the end.
  */
 import { readFileSync } from "node:fs";
+import { createHmac } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const env = Object.fromEntries(
@@ -114,34 +115,38 @@ let orgId;
   }
 }
 
-// --- Owner auth user --------------------------------------------------------
-let ownerId;
-{
+// --- Owner auth user (resilient: the admin API can be flaky) -----------------
+let ownerId = null;
+try {
   const { data: created, error } = await supa.auth.admin.createUser({
     email: OWNER_EMAIL,
     password: OWNER_PASSWORD,
     email_confirm: true,
     user_metadata: { full_name: "Owner El Sol" },
   });
-  if (error && !/already/i.test(error.message)) {
-    die("crear usuario owner", error);
+  if (error) throw error;
+  ownerId = created.user.id;
+  console.log("✓ usuario owner creado");
+} catch {
+  try {
+    const { data: list } = await supa.auth.admin.listUsers();
+    const found = list?.users?.find((u) => u.email === OWNER_EMAIL);
+    if (found) {
+      ownerId = found.id;
+      console.log("• usuario owner ya existe");
+    }
+  } catch {
+    /* admin API unavailable right now */
   }
-  if (created?.user) {
-    ownerId = created.user.id;
-    console.log("✓ usuario owner creado");
-  } else {
-    // Already exists: find it.
-    const { data: list, error: listErr } = await supa.auth.admin.listUsers();
-    die("listar usuarios", listErr);
-    const found = list.users.find((u) => u.email === OWNER_EMAIL);
-    if (!found) die("encontrar usuario owner", { message: "no encontrado" });
-    ownerId = found.id;
-    console.log("• usuario owner ya existe");
+  if (!ownerId) {
+    console.warn(
+      "⚠ no se pudo crear/encontrar el owner (API admin de auth). Continúo; reintenta luego.",
+    );
   }
 }
 
-// --- Profile + membership ---------------------------------------------------
-{
+// --- Profile + membership (solo si tenemos el owner) ------------------------
+if (ownerId) {
   const { error: profErr } = await supa
     .from("profiles")
     .upsert({ id: ownerId, full_name: "Owner El Sol" }, { onConflict: "id" });
@@ -167,6 +172,78 @@ let ownerId;
   }
 }
 
+// --- Demo membership with the literal token "demo" -------------------------
+// Lets the landing's "Ver tarjeta demo" link (/c/demo) resolve against the DB.
+{
+  const secret = env.TOKEN_HASH_SECRET;
+  const demoHash = createHmac("sha256", secret).update("demo").digest("hex");
+  const { data: existing } = await supa
+    .from("memberships")
+    .select("id")
+    .eq("public_token_hash", demoHash)
+    .maybeSingle();
+  if (existing) {
+    console.log("• membresía demo (token 'demo') ya existe");
+  } else {
+    const { data: prog } = await supa
+      .from("loyalty_programs")
+      .select("id")
+      .eq("organization_id", orgId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    const { data: cust, error: cErr } = await supa
+      .from("customers")
+      .insert({
+        organization_id: orgId,
+        full_name: "María Rodríguez Solano",
+        phone_raw: "8888-7777",
+        phone_normalized: "+50688887777",
+        privacy_consent_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+    die("crear cliente demo", cErr);
+
+    const { data: veh, error: vErr } = await supa
+      .from("vehicles")
+      .insert({
+        organization_id: orgId,
+        customer_id: cust.id,
+        license_plate_raw: "BMT-345",
+        license_plate_normalized: "BMT345",
+      })
+      .select("id")
+      .single();
+    die("crear vehículo demo", vErr);
+
+    const { data: mem, error: mErr } = await supa
+      .from("memberships")
+      .insert({
+        organization_id: orgId,
+        customer_id: cust.id,
+        vehicle_id: veh.id,
+        loyalty_program_id: prog.id,
+        public_token_hash: demoHash,
+        public_token_prefix: "demo",
+        status: "active",
+      })
+      .select("id")
+      .single();
+    die("crear membresía demo", mErr);
+
+    const { error: bErr } = await supa.from("membership_balances").insert({
+      membership_id: mem.id,
+      organization_id: orgId,
+      paid_visits_in_cycle: 3,
+      available_rewards: 0,
+    });
+    die("crear balance demo", bErr);
+    console.log("✓ membresía demo creada (token 'demo', 3/9)");
+  }
+}
+
 console.log("\n=== Credenciales de acceso (dev) ===");
 console.log(`  email:    ${OWNER_EMAIL}`);
 console.log(`  password: ${OWNER_PASSWORD}`);
+console.log("  tarjeta demo: /c/demo");

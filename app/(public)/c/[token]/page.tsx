@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { MembershipStatus } from "@/types/domain";
-import { resolveCardView } from "@/lib/loyalty/demo-store";
+import { getCardViewByToken } from "@/lib/loyalty/queries";
 import { generateQrAssets } from "@/lib/qr/generate";
 import { LoyaltyCard } from "@/components/loyalty-card/LoyaltyCard";
 
@@ -16,12 +16,15 @@ export const metadata: Metadata = {
 };
 
 /**
- * Public digital card (§10 Flujo C). Currently backed by demo data; the token
- * lookup will be replaced by an RLS-protected query in the database phase.
+ * Public digital card (§10 Flujo C). Looks up the membership by hashed token in
+ * Supabase (admin client — public pages have no session; the token is the
+ * capability).
  */
+export const dynamic = "force-dynamic";
+
 export default async function CardPage({ params }: PageProps) {
   const { token } = await params;
-  const card = resolveCardView(token);
+  const card = await getCardViewByToken(token);
 
   if (!card) {
     notFound();
