@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { askAssistant } from "@/actions/ai";
 import { Button } from "@/components/ui/button";
@@ -144,7 +144,6 @@ function CopilotDrawer({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -169,9 +168,10 @@ function CopilotDrawer({
       const res = await askAssistant(q, pageLabel);
       if (res.ok) {
         setTurns((t) => [...t, { role: "assistant", content: res.text }]);
-        // Reflect any changes the assistant made (e.g. a new Kanban task) on the
-        // page behind the panel, live.
-        router.refresh();
+        // No router.refresh() here: the server action already calls
+        // revalidatePath when it writes, which refreshes the page behind the
+        // panel. A second refresh would double-render and race the Supabase
+        // token refresh, invalidating the session.
       } else {
         setError(res.message);
       }

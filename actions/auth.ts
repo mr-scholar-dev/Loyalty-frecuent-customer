@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getClientIp, rateLimit } from "@/lib/security/rate-limit";
@@ -37,5 +38,11 @@ export async function login(
 export async function logout(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // The server client ignores auth-cookie clears (to survive refresh races), so
+  // delete the session cookies explicitly here for a real logout.
+  const store = await cookies();
+  store.getAll().forEach((c) => {
+    if (c.name.includes("-auth-token")) store.delete(c.name);
+  });
   redirect("/login");
 }

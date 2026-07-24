@@ -19,11 +19,19 @@ export async function updateSession(
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
+        // Drop spurious clears of the auth session cookie (refresh-token
+        // rotation races between concurrent requests would otherwise log the
+        // user out). Real refreshes write a non-empty value and pass through.
+        const safe = cookiesToSet.filter(
+          ({ name, value, options }) =>
+            !(
+              name.includes("-auth-token") &&
+              (!value || options?.maxAge === 0)
+            ),
         );
+        safe.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
+        safe.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
       },

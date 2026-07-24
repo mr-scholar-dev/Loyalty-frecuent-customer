@@ -1,14 +1,22 @@
+import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-/** Current authenticated user (revalidated), or null. */
-export async function getCurrentUser(): Promise<User | null> {
+/**
+ * Current authenticated user, or null. Memoized per-request with `cache()` so
+ * getUser() runs at most ONCE per request. Repeated calls (e.g. across the
+ * layout, page and multiple server-action tool steps) reuse the first result;
+ * this avoids a late getUser() re-validating the token mid-action, which — with
+ * the project's ES256 signing keys — could fail and make supabase-js clear the
+ * session (logging the user out).
+ */
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<User | null> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
 
 export interface ActiveMembership {
   organizationId: string;
@@ -21,11 +29,9 @@ export interface ActiveMembership {
  * The current user's active organization membership (org + role), read under
  * RLS. Returns null if not authenticated or not a member of any org.
  */
-export async function getActiveMembership(): Promise<ActiveMembership | null> {
+export const getActiveMembership = cache(async function getActiveMembership(): Promise<ActiveMembership | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return null;
 
   const { data: membership } = await supabase
@@ -49,4 +55,4 @@ export async function getActiveMembership(): Promise<ActiveMembership | null> {
     organizationSlug: org?.slug ?? "",
     role: membership.role,
   };
-}
+});
