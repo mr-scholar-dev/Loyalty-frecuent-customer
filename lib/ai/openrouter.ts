@@ -1,23 +1,59 @@
 import "server-only";
 
 /**
- * OpenRouter client — SERVER ONLY. OpenRouter exposes an OpenAI-compatible
- * Chat Completions API, so the model is configurable (Claude, GPT, Llama…)
- * via OPENROUTER_MODEL without code changes, including tool/function calling.
+ * LLM client — SERVER ONLY. Talks to an OpenAI-compatible Chat Completions API
+ * (tool/function calling included). Supports two providers, selected by env:
+ *   - Cerebras direct (CEREBRAS_API_KEY) — fast, takes precedence.
+ *   - OpenRouter (OPENROUTER_API_KEY) — multi-provider fallback.
  *
- * Degrades gracefully: `isAIConfigured()` is false until OPENROUTER_API_KEY is
- * set, so the IA section shows a "no configurada" state instead of erroring.
+ * Degrades gracefully: `isAIConfigured()` is false until a key is set, so the
+ * IA section shows a "no configurada" state instead of erroring.
  */
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-oss-120b";
+const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
+
+interface Provider {
+  url: string;
+  key: string;
+  defaultModel: string;
+  isOpenRouter: boolean;
+}
+
+/** Cerebras (direct) takes precedence; OpenRouter is the multi-provider fallback. */
+function getProvider(): Provider | null {
+  const cerebras = process.env.CEREBRAS_API_KEY;
+  if (cerebras) {
+    return {
+      url: CEREBRAS_URL,
+      key: cerebras,
+      defaultModel: "gpt-oss-120b",
+      isOpenRouter: false,
+    };
+  }
+  const openrouter = process.env.OPENROUTER_API_KEY;
+  if (openrouter) {
+    return {
+      url: OPENROUTER_URL,
+      key: openrouter,
+      defaultModel: "openai/gpt-oss-120b",
+      isOpenRouter: true,
+    };
+  }
+  return null;
+}
 
 export function isAIConfigured(): boolean {
-  return Boolean(process.env.OPENROUTER_API_KEY);
+  return getProvider() !== null;
 }
 
 export function getAIModel(): string {
-  return process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+  return (
+    process.env.AI_MODEL ||
+    process.env.OPENROUTER_MODEL ||
+    getProvider()?.defaultModel ||
+    "gpt-oss-120b"
+  );
 }
 
 export class AINotConfiguredError extends Error {
@@ -98,8 +134,8 @@ function parseAssistant(data: unknown): AssistantMessage {
   return { content, toolCalls };
 }
 
-/** Optional provider routing (e.g. force Cerebras for speed). Comma-separated
- * provider names in OPENROUTER_PROVIDER, ranked by preference. */
+/** Optional provider routing for OpenRouter (e.g. force Cerebras for speed).
+ * Comma-separated provider names in OPENROUTER_PROVIDER, ranked by preference. */
 function providerRouting(): Record<string, unknown> | undefined {
   const raw = process.env.OPENROUTER_PROVIDER;
   if (!raw) return undefined;
@@ -111,30 +147,33 @@ function providerRouting(): Record<string, unknown> | undefined {
   return { order, allow_fallbacks: true };
 }
 
-async function callOpenRouter(body: Record<string, unknown>): Promise<unknown> {
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) throw new AINotConfiguredError();
+async function callLLM(body: Record<string, unknown>): Promise<unknown> {
+  const provider = getProvider();
+  if (!provider) throw new AINotConfiguredError();
 
-  const provider = providerRouting();
-  const res = await fetch(OPENROUTER_URL, {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${provider.key}`,
+    "Content-Type": "application/json",
+  };
+  const extra: Record<string, unknown> = {};
+  if (provider.isOpenRouter) {
+    headers["HTTP-Referer"] =
+      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3200";
+    headers["X-Title"] = "Loyalty Web";
+    const routing = providerRouting();
+    if (routing) extra.provider = routing;
+  }
+
+  const res = await fetch(provider.url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3200",
-      "X-Title": "Loyalty Web",
-    },
-    body: JSON.stringify({
-      model: getAIModel(),
-      ...(provider ? { provider } : {}),
-      ...body,
-    }),
+    headers,
+    body: JSON.stringify({ model: getAIModel(), ...extra, ...body }),
     cache: "no-store",
   });
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    throw new Error(`OpenRouter ${res.status}: ${detail.slice(0, 200)}`);
+    throw new Error(`LLM ${res.status}: ${detail.slice(0, 200)}`);
   }
   return res.json();
 }
@@ -144,10 +183,12 @@ export async function chat(
   messages: ChatMessage[],
   opts: { temperature?: number; maxTokens?: number } = {},
 ): Promise<string> {
-  const data = await callOpenRouter({
+  const data = await callLLM({
     messages,
     temperature: opts.temperature ?? 0.4,
-    max_tokens: opts.maxTokens ?? 800,
+    // Headroom for reasoning models (e.g. gpt-oss) that spend tokens thinking
+    // before emitting content.
+    max_tokens: opts.maxTokens ?? 1500,
   });
   const { content } = parseAssistant(data);
   if (!content) throw new Error("La IA no devolvió una respuesta válida.");
@@ -163,11 +204,12 @@ export async function completeWithTools(
   const body: Record<string, unknown> = {
     messages,
     temperature: opts.temperature ?? 0.3,
-    max_tokens: opts.maxTokens ?? 900,
+    // Headroom for reasoning tokens + the answer / tool call.
+    max_tokens: opts.maxTokens ?? 1800,
   };
   if (tools.length > 0) {
     body.tools = tools;
     body.tool_choice = "auto";
   }
-  return parseAssistant(await callOpenRouter(body));
+  return parseAssistant(await callLLM(body));
 }
