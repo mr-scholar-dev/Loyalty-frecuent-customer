@@ -2,13 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, KeyRound, Loader2, RotateCcw, ShieldCheck } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Ban,
+  KeyRound,
+  Loader2,
+  RotateCcw,
+  ShieldCheck,
+} from "lucide-react";
 import { MembershipStatus } from "@/types/domain";
 import {
+  archiveCustomerAction,
   blockAction,
   reactivateAction,
   reissueAction,
   reverseVisitAction,
+  unarchiveCustomerAction,
 } from "@/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +27,14 @@ import { Label } from "@/components/ui/label";
 interface CustomerActionsProps {
   membershipId: string;
   status: MembershipStatus;
+  archived: boolean;
   canReverse: boolean;
 }
 
 export function CustomerActions({
   membershipId,
   status,
+  archived,
   canReverse,
 }: CustomerActionsProps) {
   const router = useRouter();
@@ -31,6 +43,7 @@ export function CustomerActions({
   const [reversing, setReversing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reissuedPath, setReissuedPath] = useState<string | null>(null);
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
 
   const isBlocked = status === MembershipStatus.Blocked;
 
@@ -79,6 +92,30 @@ export function CustomerActions({
     });
   }
 
+  if (archived) {
+    return (
+      <div className="space-y-3">
+        <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+          Cliente archivado. No aparece en la operación diaria y su tarjeta está
+          inactiva.
+        </p>
+        <Button
+          variant="secondary"
+          onClick={() => run(() => unarchiveCustomerAction(membershipId))}
+          disabled={isPending}
+        >
+          {isPending && <Loader2 className="animate-spin" aria-hidden />}
+          <ArchiveRestore aria-hidden /> Desarchivar cliente
+        </Button>
+        {error && (
+          <p role="alert" className="text-sm font-medium text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -113,7 +150,45 @@ export function CustomerActions({
             <RotateCcw aria-hidden /> Revertir último lavado
           </Button>
         )}
+
+        {!confirmingArchive && (
+          <Button
+            variant="outline"
+            onClick={() => setConfirmingArchive(true)}
+            disabled={isPending}
+          >
+            <Archive aria-hidden /> Archivar cliente
+          </Button>
+        )}
       </div>
+
+      {confirmingArchive && (
+        <div className="space-y-2 rounded-lg border bg-muted/40 p-3">
+          <p className="text-sm font-medium">
+            ¿Archivar este cliente? Se ocultará de la operación y su tarjeta
+            quedará inactiva (reversible).
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setConfirmingArchive(false);
+                run(() => archiveCustomerAction(membershipId));
+              }}
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="animate-spin" aria-hidden />}
+              Confirmar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingArchive(false)}
+              disabled={isPending}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
 
       {reissuedPath && (
         <div className="rounded-lg border bg-emerald-50 p-3 text-sm">

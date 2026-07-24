@@ -18,13 +18,17 @@ const STATUS_OPTIONS = [
   { value: "all", label: "Todos" },
   { value: MembershipStatus.Active, label: "Activas" },
   { value: MembershipStatus.Blocked, label: "Bloqueadas" },
+  { value: "archived", label: "Archivados" },
 ];
 
-function parseStatus(value: string | undefined): MembershipStatus | "all" {
+function parseStatus(
+  value: string | undefined,
+): MembershipStatus | "all" | "archived" {
   if (
     value === MembershipStatus.Active ||
     value === MembershipStatus.Blocked ||
-    value === MembershipStatus.Expired
+    value === MembershipStatus.Expired ||
+    value === "archived"
   ) {
     return value;
   }
@@ -112,7 +116,13 @@ export default async function CustomersPage({ searchParams }: PageProps) {
                   )}
                 </td>
                 <td className="px-4 py-2.5">
-                  <StatusBadge status={item.status} />
+                  {item.archived ? (
+                    <span className="inline-block rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      Archivado
+                    </span>
+                  ) : (
+                    <StatusBadge status={item.status} />
+                  )}
                 </td>
               </tr>
             ))}

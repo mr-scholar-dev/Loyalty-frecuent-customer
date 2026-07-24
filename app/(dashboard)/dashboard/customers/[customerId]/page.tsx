@@ -36,7 +36,13 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             {detail.organizationName}
           </p>
         </div>
-        <StatusBadge status={detail.status} />
+        {detail.archived ? (
+          <span className="inline-block rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+            Archivado
+          </span>
+        ) : (
+          <StatusBadge status={detail.status} />
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -93,6 +99,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
           <CustomerActions
             membershipId={detail.id}
             status={detail.status}
+            archived={detail.archived}
             canReverse={detail.progress.current > 0}
           />
         </CardContent>

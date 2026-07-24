@@ -57,13 +57,14 @@ export interface AdminListItem {
   licensePlate: string;
   organizationName: string;
   status: MembershipStatus;
+  archived: boolean;
   progress: ProgressView;
   joinedAt: string;
   lastActivityAt: string | null;
 }
 export interface ListFilters {
   query?: string;
-  status?: MembershipStatus | "all";
+  status?: MembershipStatus | "all" | "archived";
 }
 export interface MembershipDetail extends AdminListItem {
   tokenPrefix: string;
@@ -87,7 +88,12 @@ export interface AuditEntry {
 interface Loaded {
   customers: Map<
     string,
-    { full_name: string; phone_normalized: string | null; created_at: string }
+    {
+      full_name: string;
+      phone_normalized: string | null;
+      created_at: string;
+      status: string;
+    }
   >;
   vehicles: Map<
     string,
@@ -124,7 +130,7 @@ async function load(): Promise<Loaded> {
   ] = await Promise.all([
     supabase
       .from("customers")
-      .select("id, full_name, phone_normalized, created_at"),
+      .select("id, full_name, phone_normalized, created_at, status"),
     supabase
       .from("vehicles")
       .select("id, customer_id, license_plate_normalized"),
@@ -179,6 +185,7 @@ function toAdminItem(
     licensePlate: vehicle?.license_plate_normalized ?? "—",
     organizationName: l.orgNameById.get(m.organization_id) ?? "—",
     status: m.status as MembershipStatus,
+    archived: l.customers.get(m.customer_id)?.status === "archived",
     progress: progressFor(l, m.id),
     joinedAt: m.joined_at,
     lastActivityAt: m.last_activity_at,
@@ -269,8 +276,14 @@ export async function listMemberships(
   const q = filters.query?.trim().toLowerCase();
   const status = filters.status ?? "all";
   return l.memberships
-    .filter((m) => (status === "all" ? true : m.status === status))
     .map((m) => toAdminItem(l, m))
+    .filter((item) => {
+      // "archived" is its own view; every other view hides archived customers.
+      if (status === "archived") return item.archived;
+      if (item.archived) return false;
+      if (status === "all") return true;
+      return item.status === status;
+    })
     .filter((item) => {
       if (!q) return true;
       return (

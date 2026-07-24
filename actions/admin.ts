@@ -120,6 +120,57 @@ export async function reissueAction(
   return { ok: true, newToken: issued.token };
 }
 
+/**
+ * Archive (soft-delete) or restore a customer. Archiving also blocks the card;
+ * restoring reactivates it. Never hard-deletes — preserves ledger + audit.
+ */
+async function setArchived(
+  membershipId: string,
+  archived: boolean,
+): Promise<AdminActionResult> {
+  const supabase = await createClient();
+  const { data: m } = await supabase
+    .from("memberships")
+    .select("id, customer_id, organization_id")
+    .eq("id", membershipId)
+    .maybeSingle();
+  if (!m) return { ok: false, reason: "not_authorized" };
+
+  const { data: cust, error: cErr } = await supabase
+    .from("customers")
+    .update({ status: archived ? "archived" : "active" })
+    .eq("id", m.customer_id)
+    .select("id");
+  if (cErr) return { ok: false, reason: "error" };
+  if (!cust?.length) return { ok: false, reason: "not_authorized" };
+
+  await supabase
+    .from("memberships")
+    .update({ status: archived ? "blocked" : "active" })
+    .eq("id", membershipId);
+
+  await writeAudit(
+    m.organization_id,
+    archived ? "customer.archive" : "customer.unarchive",
+    membershipId,
+    { note: archived ? "Cliente archivado" : "Cliente restaurado" },
+  );
+  revalidate(membershipId);
+  return { ok: true };
+}
+
+export async function archiveCustomerAction(
+  membershipId: string,
+): Promise<AdminActionResult> {
+  return setArchived(membershipId, true);
+}
+
+export async function unarchiveCustomerAction(
+  membershipId: string,
+): Promise<AdminActionResult> {
+  return setArchived(membershipId, false);
+}
+
 /** Reverse the last paid visit via the transactional RPC (§Flujo G). */
 export async function reverseVisitAction(
   membershipId: string,
