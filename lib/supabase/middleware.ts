@@ -35,11 +35,28 @@ export async function updateSession(
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Gate the dashboard: unauthenticated users go to /login.
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  // Gate the dashboard — but only redirect when the user is TRULY logged out
+  // (no Supabase auth cookie present). getUser() can transiently return null
+  // during a token refresh/rotation; bouncing to /login in that case logs the
+  // user out mid-work. When a session cookie exists we let the request through
+  // (RLS is the real security boundary) and the session recovers next request.
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.includes("-auth-token"));
+
+  if (
+    !user &&
+    !hasAuthCookie &&
+    request.nextUrl.pathname.startsWith("/dashboard")
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    // Preserve any refreshed cookies on the redirect.
+    response.cookies.getAll().forEach((c) => {
+      redirectResponse.cookies.set(c.name, c.value, c);
+    });
+    return redirectResponse;
   }
 
   return response;

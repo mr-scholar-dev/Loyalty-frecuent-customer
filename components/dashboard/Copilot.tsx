@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { askAssistant } from "@/actions/ai";
 import { Button } from "@/components/ui/button";
@@ -144,6 +144,7 @@ function CopilotDrawer({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -166,19 +167,22 @@ function CopilotDrawer({
     setTurns((t) => [...t, { role: "user", content: q }]);
     startTransition(async () => {
       const res = await askAssistant(q, pageLabel);
-      if (res.ok) setTurns((t) => [...t, { role: "assistant", content: res.text }]);
-      else setError(res.message);
+      if (res.ok) {
+        setTurns((t) => [...t, { role: "assistant", content: res.text }]);
+        // Reflect any changes the assistant made (e.g. a new Kanban task) on the
+        // page behind the panel, live.
+        router.refresh();
+      } else {
+        setError(res.message);
+      }
     });
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
-      <aside className="animate-in slide-in-from-right-8 absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l bg-card shadow-2xl duration-200">
+    // Non-modal: the wrapper ignores pointer events so the app behind stays
+    // fully visible and interactive; only the panel captures clicks.
+    <div className="pointer-events-none fixed inset-0 z-50">
+      <aside className="animate-in slide-in-from-right-8 pointer-events-auto absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l bg-card shadow-2xl duration-200">
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-3">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-semibold">
