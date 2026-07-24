@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { askAssistant } from "@/actions/ai";
@@ -170,15 +171,15 @@ function CopilotDrawer({
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+  return createPortal(
+    <div className="fixed inset-0 z-50">
       <div
-        className="absolute inset-0 bg-black/30"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden
       />
-      <aside className="animate-in slide-in-from-right relative flex h-full w-full max-w-md flex-col border-l bg-card shadow-2xl duration-200">
-        <header className="flex items-center justify-between border-b px-4 py-3">
+      <aside className="animate-in slide-in-from-right-8 absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l bg-card shadow-2xl duration-200">
+        <header className="flex shrink-0 items-center justify-between border-b px-4 py-3">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-semibold">
               <Sparkles className="h-4 w-4 text-primary" aria-hidden />
@@ -198,19 +199,25 @@ function CopilotDrawer({
           </button>
         </header>
 
-        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
+        >
           {turns.length === 0 ? (
-            <div className="space-y-3">
+            <div className="flex h-full flex-col justify-center gap-4 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Sparkles className="h-6 w-6" aria-hidden />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Puedo consultar tu negocio y ejecutar acciones. Prueba con:
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 text-left">
                 {suggestions.map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => ask(s)}
-                    className="rounded-lg border bg-muted/40 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                    className="rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
                   >
                     {s}
                   </button>
@@ -253,7 +260,7 @@ function CopilotDrawer({
             e.preventDefault();
             ask(input);
           }}
-          className="flex gap-2 border-t p-3"
+          className="flex shrink-0 gap-2 border-t p-3"
         >
           <input
             autoFocus
@@ -268,6 +275,7 @@ function CopilotDrawer({
           </Button>
         </form>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
