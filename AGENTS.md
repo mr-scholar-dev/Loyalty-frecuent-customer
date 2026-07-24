@@ -96,8 +96,10 @@ SaaS (Stripe), programas por monto, cupones, referidos, marketing, marca blanca.
   Next.js + TS estricto + Tailwind + shadcn preparado + ESLint/Prettier +
   Vitest/RTL + Playwright preparado + Supabase CLI preparado + estructura +
   `.env.example` + `/api/health` + home mínima + Docker.
-- Fase 1 — BD y seguridad (enums, tablas, índices, FKs, constraints, helpers y
-  políticas RLS, seed, tests SQL).
+- Fase 1 — BD y seguridad: **SQL preparado, sin verificar** (falta Docker +
+  Supabase CLI). Migraciones en `supabase/migrations/` (enums, tablas, índices,
+  FKs, constraints, helpers y políticas RLS), `seed.sql` y tests pgTAP en
+  `supabase/tests/`. Validar con `supabase db reset` + `supabase test db`.
 - Fase 2 — Auth y organizaciones.
 - Fase 3 — Fidelización (ledger, balance, RPC visita/recompensa, reversión, idempotencia, auditoría).
 - Fase 4 — Registro público.
