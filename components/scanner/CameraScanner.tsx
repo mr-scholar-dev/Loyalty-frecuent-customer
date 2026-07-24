@@ -1,0 +1,158 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { BrowserQRCodeReader, type IScannerControls } from "@zxing/browser";
+import { CameraOff, Loader2 } from "lucide-react";
+
+interface CameraScannerProps {
+  onResult: (value: string) => void;
+}
+
+type CameraState = "idle" | "starting" | "scanning" | "denied" | "unsupported";
+
+/**
+ * Camera QR scanner (§7, §Fase6). Prefers the native `BarcodeDetector` when
+ * available, otherwise falls back to `@zxing/browser`. Handles denied
+ * permissions gracefully with a message; manual entry is always available.
+ */
+export function CameraScanner({ onResult }: CameraScannerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [state, setState] = useState<CameraState>("idle");
+  const controlsRef = useRef<IScannerControls | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const doneRef = useRef(false);
+
+  function stop() {
+    controlsRef.current?.stop();
+    controlsRef.current = null;
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
+
+  useEffect(() => {
+    // Cleanup on unmount.
+    return () => stop();
+  }, []);
+
+  function handleHit(value: string) {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    stop();
+    setState("idle");
+    onResult(value);
+  }
+
+  async function start() {
+    doneRef.current = false;
+    setState("starting");
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      if (typeof window !== "undefined" && window.BarcodeDetector) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+        streamRef.current = stream;
+        video.srcObject = stream;
+        await video.play();
+        setState("scanning");
+
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        const tick = async () => {
+          if (doneRef.current) return;
+          try {
+            const codes = await detector.detect(video);
+            const first = codes[0];
+            if (first) {
+              handleHit(first.rawValue);
+              return;
+            }
+          } catch {
+            // transient detect error — keep trying
+          }
+          rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Fallback: ZXing.
+      const reader = new BrowserQRCodeReader();
+      setState("scanning");
+      controlsRef.current = await reader.decodeFromVideoDevice(
+        undefined,
+        video,
+        (result) => {
+          if (result) handleHit(result.getText());
+        },
+      );
+    } catch (err) {
+      stop();
+      const denied =
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "SecurityError");
+      setState(denied ? "denied" : "unsupported");
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-slate-900">
+        <video
+          ref={videoRef}
+          className="h-full w-full object-cover"
+          playsInline
+          muted
+        />
+        {state !== "scanning" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center text-sm text-white/80">
+            {state === "starting" && (
+              <>
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+                Iniciando cámara…
+              </>
+            )}
+            {state === "denied" && (
+              <>
+                <CameraOff className="h-6 w-6" aria-hidden />
+                Permiso de cámara denegado. Usa la entrada manual.
+              </>
+            )}
+            {state === "unsupported" && (
+              <>
+                <CameraOff className="h-6 w-6" aria-hidden />
+                No se pudo iniciar la cámara. Usa la entrada manual.
+              </>
+            )}
+            {state === "idle" && <span>Cámara detenida</span>}
+          </div>
+        )}
+      </div>
+
+      {state === "scanning" ? (
+        <button
+          type="button"
+          onClick={() => {
+            stop();
+            setState("idle");
+          }}
+          className="w-full text-sm font-medium text-muted-foreground underline underline-offset-4"
+        >
+          Detener cámara
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={start}
+          className="w-full text-sm font-medium text-primary underline underline-offset-4"
+        >
+          Escanear con la cámara
+        </button>
+      )}
+    </div>
+  );
+}
