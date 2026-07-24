@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BillingButton } from "@/components/dashboard/BillingButton";
-import { PRO_PRICE_USD, CONTACT_PHONE } from "@/lib/site";
+import {
+  PRO_PRICE_USD,
+  PRO_PRICE_USD_ANNUAL,
+  CONTACT_PHONE,
+} from "@/lib/site";
 
 export const metadata: Metadata = { title: "Facturación" };
 export const dynamic = "force-dynamic";
 
 const PRO_FEATURES = [
+  "Copiloto con IA (consulta y crea tareas)",
+  "Clientes en riesgo + mensajes de reactivación",
+  "Tablero Kanban con equipo",
   "Sucursales y clientes ilimitados",
-  "Equipo con roles",
   "Reportes, exportación y auditoría",
-  "Tablero Kanban",
   "Soporte por WhatsApp",
 ];
 
@@ -27,11 +32,16 @@ export default function BillingPage() {
         <CardHeader>
           <CardTitle className="flex items-baseline justify-between">
             <span>Plan Pro</span>
-            <span className="font-mono text-2xl font-bold">
-              ${PRO_PRICE_USD}
-              <span className="text-sm font-normal text-muted-foreground">
-                {" "}
-                /mes USD
+            <span className="text-right">
+              <span className="font-mono text-2xl font-bold">
+                ${PRO_PRICE_USD}
+                <span className="text-sm font-normal text-muted-foreground">
+                  {" "}
+                  /mes USD
+                </span>
+              </span>
+              <span className="block text-xs font-normal text-primary">
+                o ${PRO_PRICE_USD_ANNUAL}/mes anual
               </span>
             </span>
           </CardTitle>

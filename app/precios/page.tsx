@@ -6,13 +6,17 @@ import { PricingCards } from "@/components/marketing/PricingCards";
 export const metadata: Metadata = {
   title: "Precios",
   description:
-    "Planes de Loyalty Web para servicentros: Pro (US$40/mes) y Empresa. Comunícate para activar tu cuenta.",
+    "Planes de Loyalty Web para servicentros: Pro (US$65/mes o US$54/mes anual) y Empresa. Comunícate para activar tu cuenta.",
 };
 
 const faqs = [
   {
     q: "¿Cuánto cuesta?",
-    a: "El plan Pro cuesta US$40 al mes por servicentro. Empresa es a medida para cadenas o marca blanca.",
+    a: "El plan Pro cuesta US$65 al mes por servicentro, o US$54/mes si pagas anual (2 meses gratis). Empresa es a medida para cadenas o marca blanca.",
+  },
+  {
+    q: "¿Qué incluye la IA?",
+    a: "Un copiloto que consulta tu negocio en lenguaje natural, detecta clientes en riesgo, redacta mensajes de reactivación por WhatsApp y hasta crea tareas en tu tablero Kanban.",
   },
   {
     q: "¿Cómo empiezo?",
