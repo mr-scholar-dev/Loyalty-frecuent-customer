@@ -100,7 +100,10 @@ SaaS (Stripe), programas por monto, cupones, referidos, marketing, marca blanca.
   Supabase CLI). Migraciones en `supabase/migrations/` (enums, tablas, índices,
   FKs, constraints, helpers y políticas RLS), `seed.sql` y tests pgTAP en
   `supabase/tests/`. Validar con `supabase db reset` + `supabase test db`.
-- Fase 2 — Auth y organizaciones.
+- Fase 2 — Auth y organizaciones: **en curso**. Login (`/login`), logout,
+  middleware con refresco de sesión y gating de `/dashboard`, y lectura de la
+  membresía/organización bajo RLS ✅. Falta: registro/gestión de miembros y
+  reemplazar el `demo-store` del dashboard por consultas reales.
 - Fase 3 — Fidelización: **RPC SQL preparados, sin verificar**
   (`register_paid_visit`, `redeem_reward`, `reverse_last_visit` en
   `supabase/migrations/…_rpc_loyalty.sql`; test pgTAP `rpc_loyalty.test.sql`).

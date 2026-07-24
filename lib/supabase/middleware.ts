@@ -31,7 +31,16 @@ export async function updateSession(
   });
 
   // IMPORTANT: use getUser() (revalidates the token), not getSession().
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Gate the dashboard: unauthenticated users go to /login.
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
 
   return response;
 }
