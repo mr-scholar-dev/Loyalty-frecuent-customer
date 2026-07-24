@@ -12,6 +12,8 @@ import type { OrganizationBrand } from "@/lib/loyalty/card";
 export interface MembershipRecord {
   organization: OrganizationBrand;
   customerFullName: string;
+  /** Normalized phone (used for admin search). */
+  phoneNormalized: string | null;
   /** Normalized license plate. */
   licensePlate: string;
   paidVisitsInCycle: number;
@@ -30,6 +32,7 @@ export const SAMPLE_SEEDS: Record<string, MembershipRecord> = {
       secondaryColor: "#0ea5e9",
     },
     customerFullName: "María Rodríguez Solano",
+    phoneNormalized: "+50688887777",
     licensePlate: "BMT345",
     paidVisitsInCycle: 3,
     availableRewards: 0,
@@ -45,6 +48,7 @@ export const SAMPLE_SEEDS: Record<string, MembershipRecord> = {
       secondaryColor: "#db2777",
     },
     customerFullName: "Carlos Jiménez Vargas",
+    phoneNormalized: "+50670001234",
     licensePlate: "CL1289",
     paidVisitsInCycle: 2,
     availableRewards: 1,
@@ -60,6 +64,7 @@ export const SAMPLE_SEEDS: Record<string, MembershipRecord> = {
       secondaryColor: "#f59e0b",
     },
     customerFullName: "Ana Mora",
+    phoneNormalized: "+50761005050",
     licensePlate: "SJB902",
     paidVisitsInCycle: 5,
     availableRewards: 0,

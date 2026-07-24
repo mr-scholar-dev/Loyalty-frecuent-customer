@@ -13,6 +13,7 @@ import {
   getDashboardMetrics,
   type RecentActivityItem,
 } from "@/lib/loyalty/demo-store";
+import { EVENT_LABELS, formatDateTimeCR } from "@/lib/loyalty/event-format";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -24,23 +25,6 @@ export const metadata: Metadata = {
 
 // Reflects the live in-memory store on each request.
 export const dynamic = "force-dynamic";
-
-const EVENT_LABELS: Record<LoyaltyEventType, string> = {
-  [LoyaltyEventType.VisitEarned]: "Lavado registrado",
-  [LoyaltyEventType.VisitReversed]: "Lavado revertido",
-  [LoyaltyEventType.RewardEarned]: "Recompensa generada",
-  [LoyaltyEventType.RewardRedeemed]: "Recompensa canjeada",
-  [LoyaltyEventType.RewardReversed]: "Recompensa revertida",
-  [LoyaltyEventType.ManualAdjustment]: "Ajuste manual",
-};
-
-function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat("es-CR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "America/Costa_Rica",
-  }).format(new Date(iso));
-}
 
 function ActivityRow({ item }: { item: RecentActivityItem }) {
   const isReward =
@@ -73,7 +57,7 @@ function ActivityRow({ item }: { item: RecentActivityItem }) {
         </div>
       </div>
       <span className="shrink-0 text-xs text-muted-foreground">
-        {formatTime(item.at)}
+        {formatDateTimeCR(item.at)}
       </span>
     </li>
   );

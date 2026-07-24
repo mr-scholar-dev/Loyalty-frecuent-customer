@@ -36,10 +36,18 @@ interface EventRecord {
   at: string;
 }
 
+export interface AuditEntry {
+  action: string;
+  entityId: string;
+  detail: string;
+  at: string;
+}
+
 const globalForStore = globalThis as typeof globalThis & {
   __loyaltyDemoStore?: Map<string, MembershipRecord>;
   __loyaltyIdempotencyKeys?: Set<string>;
   __loyaltyEvents?: EventRecord[];
+  __loyaltyAudit?: AuditEntry[];
 };
 
 function seedStore(): Map<string, MembershipRecord> {
@@ -86,9 +94,24 @@ const events: EventRecord[] =
   globalForStore.__loyaltyEvents ??
   (globalForStore.__loyaltyEvents = seedEvents());
 
+/** Audit log of administrative actions (§17). DEMO-ONLY. */
+const audit: AuditEntry[] =
+  globalForStore.__loyaltyAudit ?? (globalForStore.__loyaltyAudit = []);
+
+function recordAudit(
+  action: string,
+  entityId: string,
+  detail: string,
+  at: string,
+): void {
+  audit.push({ action, entityId, detail, at });
+}
+
 export interface CreateMembershipInput {
   organization: OrganizationBrand;
   customerFullName: string;
+  /** Normalized phone (optional; used for admin search). */
+  phoneNormalized?: string | null;
   /** Normalized license plate. */
   licensePlate: string;
   /** ISO timestamp (server-provided). */
@@ -101,6 +124,7 @@ export function createDemoMembership(input: CreateMembershipInput): string {
   store.set(token, {
     organization: input.organization,
     customerFullName: input.customerFullName,
+    phoneNormalized: input.phoneNormalized ?? null,
     licensePlate: input.licensePlate,
     paidVisitsInCycle: 0,
     availableRewards: 0,
@@ -353,4 +377,242 @@ export function getDashboardMetrics(nowIso: string): DashboardMetrics {
     recentActivity,
     nearReward,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Admin — customer management (§7 Fase 7). Demo store backed.
+// ---------------------------------------------------------------------------
+
+export interface AdminListItem {
+  id: string;
+  customerFullName: string;
+  phoneNormalized: string | null;
+  licensePlate: string;
+  organizationName: string;
+  status: MembershipStatus;
+  progress: CardView["progress"];
+  joinedAt: string;
+  lastActivityAt: string | null;
+}
+
+function toAdminItem(token: string, m: MembershipRecord): AdminListItem {
+  return {
+    id: token,
+    customerFullName: m.customerFullName,
+    phoneNormalized: m.phoneNormalized,
+    licensePlate: m.licensePlate,
+    organizationName: m.organization.name,
+    status: m.status,
+    progress: getProgressView({
+      paidVisitsInCycle: m.paidVisitsInCycle,
+      availableRewards: m.availableRewards,
+    }),
+    joinedAt: m.joinedAt,
+    lastActivityAt: m.lastActivityAt,
+  };
+}
+
+export interface ListFilters {
+  /** Free-text search over name, phone or plate. */
+  query?: string;
+  status?: MembershipStatus | "all";
+}
+
+/** List memberships for the admin table (search by name/phone/plate). */
+export function listMemberships(filters: ListFilters = {}): AdminListItem[] {
+  const q = filters.query?.trim().toLowerCase();
+  const status = filters.status ?? "all";
+  return [...store.entries()]
+    .filter(([, m]) => (status === "all" ? true : m.status === status))
+    .filter(([, m]) => {
+      if (!q) return true;
+      return (
+        m.customerFullName.toLowerCase().includes(q) ||
+        m.licensePlate.toLowerCase().includes(q) ||
+        (m.phoneNormalized?.toLowerCase().includes(q) ?? false)
+      );
+    })
+    .map(([token, m]) => toAdminItem(token, m))
+    .sort((a, b) => (a.customerFullName < b.customerFullName ? -1 : 1));
+}
+
+export interface MembershipDetail extends AdminListItem {
+  cardUrl: string;
+  events: EventRecord[];
+}
+
+/** Full membership detail incl. its event ledger, or null when unknown. */
+export function getMembershipDetail(token: string): MembershipDetail | null {
+  const m = store.get(token);
+  if (!m) return null;
+  return {
+    ...toAdminItem(token, m),
+    cardUrl: buildCardUrl(token),
+    events: events
+      .filter((e) => e.token === token)
+      .sort((a, b) => (a.at < b.at ? 1 : -1)),
+  };
+}
+
+export type AdminResult =
+  | { ok: true; detail: MembershipDetail }
+  | { ok: false; reason: "not_found" | "invalid_state" | "reason_required" };
+
+/** Block a membership (§12/§17). */
+export function blockMembership(token: string, now: string): AdminResult {
+  const m = store.get(token);
+  if (!m) return { ok: false, reason: "not_found" };
+  m.status = MembershipStatus.Blocked;
+  recordAudit("membership.block", token, "Tarjeta bloqueada", now);
+  return { ok: true, detail: getMembershipDetail(token)! };
+}
+
+/** Reactivate a blocked membership. */
+export function reactivateMembership(token: string, now: string): AdminResult {
+  const m = store.get(token);
+  if (!m) return { ok: false, reason: "not_found" };
+  m.status = MembershipStatus.Active;
+  recordAudit("membership.reactivate", token, "Tarjeta reactivada", now);
+  return { ok: true, detail: getMembershipDetail(token)! };
+}
+
+export type ReissueResult =
+  { ok: true; newToken: string } | { ok: false; reason: "not_found" };
+
+/**
+ * Reissue a card: mint a new token and invalidate the previous one (§13).
+ * The old token is removed so `/c/{oldToken}` stops resolving (revocation).
+ */
+export function reissueCard(token: string, now: string): ReissueResult {
+  const m = store.get(token);
+  if (!m) return { ok: false, reason: "not_found" };
+  const newToken = generatePublicToken();
+  store.delete(token);
+  store.set(newToken, m);
+  // Re-point this membership's events at the new token.
+  for (const e of events) {
+    if (e.token === token) e.token = newToken;
+  }
+  recordAudit(
+    "membership.reissue",
+    newToken,
+    `Tarjeta reemitida (token anterior revocado: ${token.slice(0, 8)}…)`,
+    now,
+  );
+  return { ok: true, newToken };
+}
+
+/**
+ * Reverse the most recent paid visit (§Flujo G): never deletes events — appends
+ * a `visit_reversed` event and decrements the cycle. Requires a reason.
+ */
+export function reverseLastVisit(
+  token: string,
+  reason: string,
+  now: string,
+): AdminResult {
+  const m = store.get(token);
+  if (!m) return { ok: false, reason: "not_found" };
+  if (!reason.trim()) return { ok: false, reason: "reason_required" };
+  if (m.paidVisitsInCycle < 1) return { ok: false, reason: "invalid_state" };
+
+  m.paidVisitsInCycle -= 1;
+  m.lastActivityAt = now;
+  events.push({ type: LoyaltyEventType.VisitReversed, token, at: now });
+  recordAudit(
+    "visit.reverse",
+    token,
+    `Lavado revertido. Motivo: ${reason.trim()}`,
+    now,
+  );
+  return { ok: true, detail: getMembershipDetail(token)! };
+}
+
+/** Audit log, most recent first (§17). */
+export function getAuditLog(): AuditEntry[] {
+  return [...audit].sort((a, b) => (a.at < b.at ? 1 : -1));
+}
+
+/** All visit-related events for the visits page, most recent first. */
+export interface VisitLogItem {
+  type: LoyaltyEventType;
+  customerFullName: string;
+  licensePlate: string;
+  organizationName: string;
+  at: string;
+}
+
+export function getVisitLog(): VisitLogItem[] {
+  return [...events]
+    .filter(
+      (e) =>
+        e.type === LoyaltyEventType.VisitEarned ||
+        e.type === LoyaltyEventType.VisitReversed,
+    )
+    .sort((a, b) => (a.at < b.at ? 1 : -1))
+    .map((e) => {
+      const m = store.get(e.token);
+      return {
+        type: e.type,
+        customerFullName: m?.customerFullName ?? "—",
+        licensePlate: m?.licensePlate ?? "—",
+        organizationName: m?.organization.name ?? "—",
+        at: e.at,
+      };
+    });
+}
+
+// ---------------------------------------------------------------------------
+// CSV export (§15 exports). Values are CSV-escaped.
+// ---------------------------------------------------------------------------
+
+function csvCell(value: string | number): string {
+  const s = String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function toCsv(headers: string[], rows: (string | number)[][]): string {
+  const lines = [headers, ...rows].map((r) => r.map(csvCell).join(","));
+  return lines.join("\n");
+}
+
+/** CSV of all customers/memberships. */
+export function customersCsv(): string {
+  const rows = [...store.entries()].map(([token, m]) => [
+    m.customerFullName,
+    m.phoneNormalized ?? "",
+    m.licensePlate,
+    m.organization.name,
+    m.status,
+    m.paidVisitsInCycle,
+    m.availableRewards,
+    m.joinedAt,
+    token,
+  ]);
+  return toCsv(
+    [
+      "cliente",
+      "telefono",
+      "placa",
+      "organizacion",
+      "estado",
+      "visitas_ciclo",
+      "recompensas",
+      "alta",
+      "token",
+    ],
+    rows,
+  );
+}
+
+/** CSV of the visit log. */
+export function visitsCsv(): string {
+  const rows = getVisitLog().map((v) => [
+    v.at,
+    v.type,
+    v.customerFullName,
+    v.licensePlate,
+    v.organizationName,
+  ]);
+  return toCsv(["fecha", "tipo", "cliente", "placa", "organizacion"], rows);
 }

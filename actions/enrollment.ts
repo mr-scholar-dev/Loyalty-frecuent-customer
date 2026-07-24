@@ -6,6 +6,7 @@ import {
   type EnrollmentInput,
 } from "@/lib/validation/registration";
 import { normalizePlate } from "@/lib/normalization/plate";
+import { normalizePhone } from "@/lib/normalization/phone";
 import { getSampleOrg } from "@/lib/org/sample";
 import { createDemoMembership } from "@/lib/loyalty/demo-store";
 
@@ -58,6 +59,7 @@ export async function enroll(
   const token = createDemoMembership({
     organization: org.brand,
     customerFullName: data.fullName,
+    phoneNormalized: normalizePhone(data.phone).normalized,
     licensePlate: normalizedPlate,
     joinedAt: new Date().toISOString(),
   });
