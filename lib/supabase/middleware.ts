@@ -10,6 +10,17 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
 export async function updateSession(
   request: NextRequest,
 ): Promise<NextResponse> {
+  // Only validate/refresh the session on real page navigations (document
+  // requests). Server actions, RSC fetches and prefetches pass through WITHOUT
+  // calling getUser(), so a long-running action (e.g. an AI tool step) can't
+  // spawn concurrent token refreshes that race on refresh-token rotation and
+  // make Supabase revoke the session. The access token is long-lived (1h) and
+  // is refreshed on the next navigation; RLS remains the real security boundary.
+  const isDocument = request.headers.get("sec-fetch-dest") === "document";
+  if (!isDocument) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
   const { url, publishableKey } = getSupabaseEnv();
 
