@@ -24,8 +24,8 @@ import { cn } from "@/lib/utils";
 const SUGGESTIONS = [
   "¿Cómo va el negocio este mes?",
   "¿Qué clientes están por dejar de venir?",
-  "Sugiéreme una promoción para esta semana.",
-  "¿Cómo aumento los lavados por cliente?",
+  "Crea una tarea: revisar la bomba de agua, en Por hacer.",
+  "Agenda seguimiento a los clientes en riesgo y asígnalo a Carlos.",
 ];
 
 interface ChatTurn {
@@ -138,7 +138,7 @@ function Assistant() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Sparkles className="h-4 w-4 text-primary" aria-hidden />
-          Asistente de negocio
+          Copiloto — pregunta o pide acciones
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

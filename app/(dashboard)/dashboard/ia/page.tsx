@@ -23,8 +23,9 @@ export default async function AIPage() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Asistente IA</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Pregunta por tu negocio, detecta clientes en riesgo y genera mensajes de
-        reactivación — todo sobre tus datos reales.
+        Un copiloto que conoce todo tu negocio: consulta métricas y clientes,
+        crea tareas en el Kanban, detecta clientes en riesgo y redacta mensajes
+        de reactivación — sobre tus datos reales.
       </p>
       <AIWorkspace configured={configured} counts={counts} atRisk={atRisk} />
     </main>

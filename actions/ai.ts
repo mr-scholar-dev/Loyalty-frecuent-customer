@@ -1,6 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { chat, isAIConfigured } from "@/lib/ai/openrouter";
+import { runAgent } from "@/lib/ai/agent";
 import { getBusinessContext } from "@/lib/ai/insights";
 import { getMembershipDetail } from "@/lib/loyalty/admin-queries";
 import { getActiveMembership } from "@/lib/supabase/auth";
@@ -20,6 +22,16 @@ const ADVISOR_SYSTEM =
   "Usa ÚNICAMENTE los datos proporcionados; si falta información, dilo con honestidad " +
   "en lugar de inventar cifras. Sé breve: usa viñetas cuando ayude y evita relleno.";
 
+const AGENT_SYSTEM =
+  "Eres el copiloto de Loyalty Web, la plataforma de fidelización de un " +
+  "servicentro / autolavado en Costa Rica. Conoces y operas toda la app: " +
+  "puedes CONSULTAR el negocio (métricas, clientes, clientes en riesgo) y " +
+  "GESTIONAR el tablero Kanban (crear tareas y asignarlas a empleados) usando " +
+  "las herramientas disponibles. Usa herramientas siempre que necesites datos " +
+  "reales o para ejecutar una acción; nunca inventes datos. Cuando ejecutes una " +
+  "acción (p. ej. crear una tarea), confírmalo explícitamente. Responde SIEMPRE " +
+  "en español, breve y accionable.";
+
 function notConfigured(): AIResult {
   return {
     ok: false,
@@ -32,7 +44,8 @@ async function requireOrg(): Promise<string | null> {
   return (await getActiveMembership())?.organizationId ?? null;
 }
 
-/** Free-form question answered against the org's live metrics. */
+/** Agentic assistant: knows the whole app and can act (e.g. create Kanban
+ * tasks) via tools. */
 export async function askAssistant(question: string): Promise<AIResult> {
   if (!(await requireOrg())) return { ok: false, message: "Sesión no válida." };
   if (!isAIConfigured()) return notConfigured();
@@ -40,11 +53,9 @@ export async function askAssistant(question: string): Promise<AIResult> {
   if (!q) return { ok: false, message: "Escribe una pregunta." };
 
   try {
-    const context = await getBusinessContext(new Date().toISOString());
-    const text = await chat([
-      { role: "system", content: ADVISOR_SYSTEM },
-      { role: "user", content: `${context}\n\nPregunta: ${q}` },
-    ]);
+    const { text, didWrite } = await runAgent(AGENT_SYSTEM, q);
+    // A tool may have mutated the Kanban board — refresh it.
+    if (didWrite) revalidatePath("/dashboard/kanban");
     return { ok: true, text };
   } catch {
     return { ok: false, message: "No se pudo consultar la IA. Intenta de nuevo." };
