@@ -62,6 +62,16 @@ export default async function OrganizationLanding({ params }: PageProps) {
           Inscribirme <ArrowRight aria-hidden />
         </Link>
       </div>
+
+      <p className="mx-auto mt-6 max-w-md text-center text-sm text-muted-foreground">
+        ¿Ya tienes tarjeta?{" "}
+        <Link
+          href={`/${brand.slug}/recuperar`}
+          className="font-medium text-primary underline underline-offset-4"
+        >
+          Recupérala aquí
+        </Link>
+      </p>
     </main>
   );
 }
