@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { chat, isAIConfigured } from "@/lib/ai/openrouter";
 import { runAgent } from "@/lib/ai/agent";
 import { getBusinessContext } from "@/lib/ai/insights";
@@ -61,9 +60,11 @@ export async function askAssistant(
     : q;
 
   try {
-    const { text, didWrite } = await runAgent(AGENT_SYSTEM, userMessage);
-    // A tool may have mutated the Kanban board — refresh it.
-    if (didWrite) revalidatePath("/dashboard/kanban");
+    const { text } = await runAgent(AGENT_SYSTEM, userMessage);
+    // NOTE: intentionally NOT calling revalidatePath here. Revalidating the
+    // current route re-renders its server components inside this action, which
+    // triggers another getUser() ~15s in and was implicated in the session
+    // loss. The client refreshes the view itself after the response instead.
     return { ok: true, text };
   } catch {
     return { ok: false, message: "No se pudo consultar la IA. Intenta de nuevo." };

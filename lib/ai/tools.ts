@@ -4,7 +4,7 @@ import { getAtRiskCustomers, getBusinessContext } from "./insights";
 import { listMemberships } from "@/lib/loyalty/admin-queries";
 import { getBoard } from "@/lib/loyalty/kanban";
 import { getActiveMembership } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Agent tools. The model calls these; we run them SERVER-side under the user's
@@ -167,41 +167,86 @@ export async function runTool(
     }
 
     case "create_kanban_task": {
+      // Org scoping comes from the user's session (one getUser). All DB work
+      // below uses the ADMIN client (service key, no user session) so this long
+      // action never refreshes/rotates the user's token — which is what made
+      // Supabase revoke the session and log the user out.
       const membership = await getActiveMembership();
       if (!membership) return ok("Error: sesión no válida.");
+      const org = membership.organizationId;
       const title = argStr(args, "title");
       if (!title) return ok("Error: la tarea necesita un título.");
 
-      const board = await getBoard();
-      if (!board || board.columns.length === 0)
-        return ok("Error: no hay tablero ni columnas.");
+      const admin = createAdminClient();
+
+      // Board (created lazily elsewhere; nothing to do here if missing).
+      const { data: board } = await admin
+        .from("kanban_boards")
+        .select("id")
+        .eq("organization_id", org)
+        .limit(1)
+        .maybeSingle();
+      if (!board) return ok("Error: abre el Kanban primero para crear el tablero.");
+
+      const { data: columns } = await admin
+        .from("kanban_columns")
+        .select("id, name")
+        .eq("board_id", board.id)
+        .order("position", { ascending: true });
+      if (!columns || columns.length === 0)
+        return ok("Error: el tablero no tiene columnas.");
 
       const colName = argStr(args, "column").toLowerCase();
       const column =
         (colName
-          ? board.columns.find((c) => c.name.toLowerCase().includes(colName))
-          : undefined) ?? board.columns[0];
+          ? columns.find((c) => c.name.toLowerCase().includes(colName))
+          : undefined) ?? columns[0];
       if (!column) return ok("Error: no se encontró la columna.");
 
+      // Resolve assignee by name (admin bypasses RLS on profiles).
       const assigneeName = argStr(args, "assignee").toLowerCase();
-      const member = assigneeName
-        ? board.members.find((m) => m.name.toLowerCase().includes(assigneeName))
-        : undefined;
+      let assigneeId: string | null = null;
+      let assigneeLabel = "";
+      if (assigneeName) {
+        const { data: rows } = await admin
+          .from("organization_members")
+          .select("user_id")
+          .eq("organization_id", org)
+          .eq("status", "active");
+        const ids = (rows ?? []).map((r) => r.user_id);
+        if (ids.length) {
+          const { data: profiles } = await admin
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", ids);
+          const match = (profiles ?? []).find((p) =>
+            (p.full_name ?? "").toLowerCase().includes(assigneeName),
+          );
+          if (match) {
+            assigneeId = match.id;
+            assigneeLabel = match.full_name ?? "";
+          }
+        }
+      }
 
-      const supabase = await createClient();
-      const { error } = await supabase.from("kanban_cards").insert({
+      const { count } = await admin
+        .from("kanban_cards")
+        .select("id", { count: "exact", head: true })
+        .eq("column_id", column.id);
+
+      const { error } = await admin.from("kanban_cards").insert({
         column_id: column.id,
-        organization_id: membership.organizationId,
+        organization_id: org,
         title,
         description: argStr(args, "description") || null,
-        assignee_id: member?.id ?? null,
-        position: column.cards.length,
+        assignee_id: assigneeId,
+        position: count ?? 0,
       });
       if (error) return ok("Error: no se pudo crear la tarea.");
 
       return ok(
         `Tarea "${title}" creada en la columna "${column.name}"` +
-          (member ? ` y asignada a ${member.name}` : "") +
+          (assigneeLabel ? ` y asignada a ${assigneeLabel}` : "") +
           ".",
         true,
       );
