@@ -10,7 +10,7 @@ import "server-only";
  */
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "google/gemini-3.6-flash";
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 export function isAIConfigured(): boolean {
   return Boolean(process.env.OPENROUTER_API_KEY);
@@ -98,10 +98,24 @@ function parseAssistant(data: unknown): AssistantMessage {
   return { content, toolCalls };
 }
 
+/** Optional provider routing (e.g. force Cerebras for speed). Comma-separated
+ * provider names in OPENROUTER_PROVIDER, ranked by preference. */
+function providerRouting(): Record<string, unknown> | undefined {
+  const raw = process.env.OPENROUTER_PROVIDER;
+  if (!raw) return undefined;
+  const order = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (order.length === 0) return undefined;
+  return { order, allow_fallbacks: true };
+}
+
 async function callOpenRouter(body: Record<string, unknown>): Promise<unknown> {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new AINotConfiguredError();
 
+  const provider = providerRouting();
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
@@ -110,7 +124,11 @@ async function callOpenRouter(body: Record<string, unknown>): Promise<unknown> {
       "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3200",
       "X-Title": "Loyalty Web",
     },
-    body: JSON.stringify({ model: getAIModel(), ...body }),
+    body: JSON.stringify({
+      model: getAIModel(),
+      ...(provider ? { provider } : {}),
+      ...body,
+    }),
     cache: "no-store",
   });
 
