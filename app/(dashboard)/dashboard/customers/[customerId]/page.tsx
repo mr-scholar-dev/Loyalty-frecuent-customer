@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getMembershipDetail } from "@/lib/loyalty/demo-store";
+import { ArrowLeft } from "lucide-react";
+import { getMembershipDetail } from "@/lib/loyalty/admin-queries";
 import { EVENT_LABELS, formatDateTimeCR } from "@/lib/loyalty/event-format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -17,7 +17,7 @@ interface PageProps {
 
 export default async function CustomerDetailPage({ params }: PageProps) {
   const { customerId } = await params;
-  const detail = getMembershipDetail(customerId);
+  const detail = await getMembershipDetail(customerId);
   if (!detail) notFound();
 
   return (
@@ -56,15 +56,11 @@ export default async function CustomerDetailPage({ params }: PageProps) {
                   : "—"
               }
             />
-            <div className="pt-1">
-              <Link
-                href={`/c/${detail.id}`}
-                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                target="_blank"
-              >
-                Ver tarjeta pública <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+            <Row label="Token" value={`${detail.tokenPrefix}…`} />
+            <p className="pt-1 text-xs text-muted-foreground">
+              El enlace público solo se comparte al reemitir la tarjeta (por
+              privacidad, no se guarda en claro).
+            </p>
           </CardContent>
         </Card>
 
@@ -95,7 +91,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           <CustomerActions
-            token={detail.id}
+            membershipId={detail.id}
             status={detail.status}
             canReverse={detail.progress.current > 0}
           />

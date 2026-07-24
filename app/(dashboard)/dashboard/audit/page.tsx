@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { getAuditLog } from "@/lib/loyalty/demo-store";
+import { getAuditLog } from "@/lib/loyalty/admin-queries";
 import { formatDateTimeCR } from "@/lib/loyalty/event-format";
 
 export const metadata: Metadata = { title: "Auditoría" };
 export const dynamic = "force-dynamic";
 
-export default function AuditPage() {
-  const entries = getAuditLog();
+export default async function AuditPage() {
+  const entries = await getAuditLog();
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">

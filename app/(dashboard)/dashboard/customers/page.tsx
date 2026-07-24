@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { MembershipStatus } from "@/types/domain";
-import { listMemberships } from "@/lib/loyalty/demo-store";
+import { listMemberships } from "@/lib/loyalty/admin-queries";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -34,7 +34,7 @@ function parseStatus(value: string | undefined): MembershipStatus | "all" {
 export default async function CustomersPage({ searchParams }: PageProps) {
   const { q, status } = await searchParams;
   const statusFilter = parseStatus(status);
-  const items = listMemberships({ query: q, status: statusFilter });
+  const items = await listMemberships({ query: q, status: statusFilter });
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">

@@ -1,24 +1,29 @@
-import { customersCsv, visitsCsv } from "@/lib/loyalty/demo-store";
+import { createClient } from "@/lib/supabase/server";
+import { customersCsv, visitsCsv } from "@/lib/loyalty/admin-queries";
 
 export const dynamic = "force-dynamic";
 
 /**
- * CSV export endpoint (§15).
- *
- * NOTE (demo): not auth-gated and reads the in-memory store. In production this
- * must require an authenticated session, scope rows to the caller's
- * organization (RLS) and check the export permission.
+ * CSV export endpoint (§15). Requires an authenticated session; the underlying
+ * queries run under RLS, so rows are scoped to the caller's organization.
  */
-export function GET(request: Request) {
-  const type = new URL(request.url).searchParams.get("type");
+export async function GET(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return new Response("No autorizado.", { status: 401 });
+  }
 
+  const type = new URL(request.url).searchParams.get("type");
   let csv: string;
   let filename: string;
   if (type === "visits") {
-    csv = visitsCsv();
+    csv = await visitsCsv();
     filename = "visitas.csv";
   } else if (type === "customers") {
-    csv = customersCsv();
+    csv = await customersCsv();
     filename = "clientes.csv";
   } else {
     return new Response("Parámetro 'type' inválido (customers | visits).", {

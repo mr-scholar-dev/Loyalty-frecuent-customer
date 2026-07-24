@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { LoyaltyEventType } from "@/types/domain";
-import { getVisitLog } from "@/lib/loyalty/demo-store";
+import { getVisitLog } from "@/lib/loyalty/admin-queries";
 import { EVENT_LABELS, formatDateTimeCR } from "@/lib/loyalty/event-format";
 
 export const metadata: Metadata = { title: "Visitas" };
 export const dynamic = "force-dynamic";
 
-export default function VisitsPage() {
-  const visits = getVisitLog();
+export default async function VisitsPage() {
+  const visits = await getVisitLog();
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">

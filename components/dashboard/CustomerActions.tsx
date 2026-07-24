@@ -15,13 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface CustomerActionsProps {
-  token: string;
+  membershipId: string;
   status: MembershipStatus;
   canReverse: boolean;
 }
 
 export function CustomerActions({
-  token,
+  membershipId,
   status,
   canReverse,
 }: CustomerActionsProps) {
@@ -30,6 +30,7 @@ export function CustomerActions({
   const [reason, setReason] = useState("");
   const [reversing, setReversing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reissuedPath, setReissuedPath] = useState<string | null>(null);
 
   const isBlocked = status === MembershipStatus.Blocked;
 
@@ -41,6 +42,19 @@ export function CustomerActions({
     });
   }
 
+  function doReissue() {
+    setError(null);
+    startTransition(async () => {
+      const result = await reissueAction(membershipId);
+      if (!result.ok) {
+        setError("No se pudo reemitir la tarjeta.");
+        return;
+      }
+      setReissuedPath(`/c/${result.newToken}`);
+      router.refresh();
+    });
+  }
+
   function doReverse() {
     if (!reason.trim()) {
       setError("El motivo es obligatorio.");
@@ -48,12 +62,14 @@ export function CustomerActions({
     }
     setError(null);
     startTransition(async () => {
-      const result = await reverseVisitAction(token, reason);
+      const result = await reverseVisitAction(membershipId, reason);
       if (!result.ok) {
         setError(
           result.reason === "invalid_state"
             ? "No hay lavados en el ciclo para revertir."
-            : "No se pudo revertir.",
+            : result.reason === "not_authorized"
+              ? "No tienes permiso para revertir."
+              : "No se pudo revertir.",
         );
         return;
       }
@@ -69,7 +85,7 @@ export function CustomerActions({
         {isBlocked ? (
           <Button
             variant="secondary"
-            onClick={() => run(() => reactivateAction(token))}
+            onClick={() => run(() => reactivateAction(membershipId))}
             disabled={isPending}
           >
             <ShieldCheck aria-hidden /> Reactivar tarjeta
@@ -77,18 +93,14 @@ export function CustomerActions({
         ) : (
           <Button
             variant="destructive"
-            onClick={() => run(() => blockAction(token))}
+            onClick={() => run(() => blockAction(membershipId))}
             disabled={isPending}
           >
             <Ban aria-hidden /> Bloquear tarjeta
           </Button>
         )}
 
-        <Button
-          variant="outline"
-          onClick={() => run(() => reissueAction(token))}
-          disabled={isPending}
-        >
+        <Button variant="outline" onClick={doReissue} disabled={isPending}>
           <KeyRound aria-hidden /> Reemitir tarjeta
         </Button>
 
@@ -102,6 +114,22 @@ export function CustomerActions({
           </Button>
         )}
       </div>
+
+      {reissuedPath && (
+        <div className="rounded-lg border bg-emerald-50 p-3 text-sm">
+          <p className="font-medium text-emerald-700">
+            Tarjeta reemitida. Comparte el nuevo enlace:
+          </p>
+          <a
+            href={reissuedPath}
+            target="_blank"
+            rel="noreferrer"
+            className="break-all font-medium text-primary underline underline-offset-2"
+          >
+            {reissuedPath}
+          </a>
+        </div>
+      )}
 
       {reversing && (
         <div className="space-y-2 rounded-lg border bg-muted/40 p-3">

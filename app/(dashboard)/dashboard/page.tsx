@@ -12,7 +12,7 @@ import { LoyaltyEventType } from "@/types/domain";
 import {
   getDashboardMetrics,
   type RecentActivityItem,
-} from "@/lib/loyalty/demo-store";
+} from "@/lib/loyalty/admin-queries";
 import { EVENT_LABELS, formatDateTimeCR } from "@/lib/loyalty/event-format";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-// Reflects the live in-memory store on each request.
+// Reflects live data on each request.
 export const dynamic = "force-dynamic";
 
 function ActivityRow({ item }: { item: RecentActivityItem }) {
@@ -67,8 +67,8 @@ function ActivityRow({ item }: { item: RecentActivityItem }) {
  * Admin dashboard (§15). Metrics are projected from the in-memory demo store;
  * they become real, RLS-scoped queries in the database phase.
  */
-export default function DashboardPage() {
-  const metrics = getDashboardMetrics(new Date().toISOString());
+export default async function DashboardPage() {
+  const metrics = await getDashboardMetrics(new Date().toISOString());
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -177,8 +177,7 @@ export default function DashboardPage() {
       </div>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        Datos de demostración en memoria. Se reemplazan por consultas reales con
-        RLS al integrar la base de datos.
+        Métricas en vivo de tu organización (bajo RLS).
       </p>
     </main>
   );
