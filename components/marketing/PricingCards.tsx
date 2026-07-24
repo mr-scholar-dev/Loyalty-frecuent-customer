@@ -26,7 +26,7 @@ const PLANS: Plan[] = [
     name: "Pro",
     price: `$${PRO_PRICE_USD}`,
     period: "/mes",
-    annualNote: `o $${PRO_PRICE_USD_ANNUAL}/mes facturado anual — 2 meses gratis`,
+    annualNote: `o $${PRO_PRICE_USD_ANNUAL}/mes facturado anual`,
     tagline: "Todo lo que tu servicentro necesita.",
     features: [
       "Copiloto con IA (consulta y crea tareas)",

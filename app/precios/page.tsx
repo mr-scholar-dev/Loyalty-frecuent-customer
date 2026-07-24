@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "¿Cuánto cuesta?",
-    a: "El plan Pro cuesta US$65 al mes por servicentro, o US$54/mes si pagas anual (2 meses gratis). Empresa es a medida para cadenas o marca blanca.",
+    a: "El plan Pro cuesta US$65 al mes por servicentro, o US$54/mes si pagas anual. Empresa es a medida para cadenas o marca blanca.",
   },
   {
     q: "¿Qué incluye la IA?",
