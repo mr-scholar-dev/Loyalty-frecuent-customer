@@ -31,7 +31,7 @@ const POINTS: { icon: LucideIcon; title: string; text: string }[] = [
 
 export function SecuritySection() {
   return (
-    <section className="border-b bg-muted/40 py-20 sm:py-24">
+    <section className="border-b bg-muted/40 py-24 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
@@ -42,11 +42,16 @@ export function SecuritySection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {POINTS.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="rounded-2xl border bg-card p-6">
-              <Icon className="h-5 w-5 text-primary" aria-hidden />
-              <h3 className="mt-3 text-base font-semibold">{title}</h3>
+            <div
+              key={title}
+              className="shadow-soft rounded-2xl border bg-card p-7"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-5 w-5" aria-hidden />
+              </span>
+              <h3 className="mt-4 text-base font-semibold">{title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                 {text}
               </p>

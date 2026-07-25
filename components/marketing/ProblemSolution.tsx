@@ -18,14 +18,14 @@ const AFTER = [
 
 export function ProblemSolution() {
   return (
-    <section className="border-b py-20 sm:py-24">
+    <section className="border-b py-24 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <h2 className="max-w-2xl text-balance text-3xl font-bold tracking-tight sm:text-4xl">
           Tu programa de fidelización no debería depender del papel.
         </h2>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
-          <div className="rounded-2xl border bg-muted/40 p-6 sm:p-8">
+        <div className="mt-14 grid gap-5 md:grid-cols-2">
+          <div className="rounded-2xl border bg-muted/40 p-7 sm:p-9">
             <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Antes
             </p>
@@ -41,7 +41,7 @@ export function ProblemSolution() {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-primary/30 bg-card p-6 shadow-sm ring-1 ring-primary/10 sm:p-8">
+          <div className="shadow-float rounded-2xl border border-primary/30 bg-card p-7 ring-1 ring-primary/10 sm:p-9">
             <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
               Con la plataforma
             </p>

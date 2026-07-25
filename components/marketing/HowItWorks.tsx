@@ -17,7 +17,7 @@ export function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="scroll-mt-20 border-b bg-muted/40 py-20 sm:py-24"
+      className="scroll-mt-20 border-b bg-muted/40 py-24 sm:py-28"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">

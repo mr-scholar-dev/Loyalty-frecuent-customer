@@ -27,12 +27,19 @@ const ITEMS: { icon: LucideIcon; title: string; text: string }[] = [
 export function CapabilitiesStrip() {
   return (
     <section className="border-b bg-card">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden bg-border px-0 sm:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden bg-border sm:grid-cols-4">
         {ITEMS.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="bg-card p-6">
-            <Icon className="h-5 w-5 text-primary" aria-hidden />
-            <p className="mt-3 text-sm font-semibold">{title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+          <div
+            key={title}
+            className="bg-card p-6 transition-colors hover:bg-muted/40 sm:p-8"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Icon className="h-[18px] w-[18px]" aria-hidden />
+            </span>
+            <p className="mt-4 text-sm font-semibold">{title}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {text}
+            </p>
           </div>
         ))}
       </div>

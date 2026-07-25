@@ -98,7 +98,7 @@ export function ProductShowcase() {
   return (
     <section
       id="plataforma"
-      className="scroll-mt-20 bg-surface-dark py-20 text-surface-dark-foreground sm:py-24"
+      className="scroll-mt-20 bg-surface-dark py-24 text-surface-dark-foreground sm:py-28"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">

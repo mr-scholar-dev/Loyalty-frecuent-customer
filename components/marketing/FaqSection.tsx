@@ -37,7 +37,7 @@ const FAQS = [
 
 export function FaqSection() {
   return (
-    <section id="faq" className="scroll-mt-20 border-b py-20 sm:py-24">
+    <section id="faq" className="scroll-mt-20 border-b py-24 sm:py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-primary">

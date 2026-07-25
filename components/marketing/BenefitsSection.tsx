@@ -43,7 +43,7 @@ const BENEFITS: { icon: LucideIcon; title: string; text: string }[] = [
 
 export function BenefitsSection() {
   return (
-    <section id="funciones" className="scroll-mt-20 border-b py-20 sm:py-24">
+    <section id="funciones" className="scroll-mt-20 border-b py-24 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
@@ -54,11 +54,11 @@ export function BenefitsSection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map(({ icon: Icon, title, text }) => (
             <div
               key={title}
-              className="group rounded-2xl border bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0"
+              className="shadow-soft hover:shadow-float group rounded-2xl border bg-card p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                 <Icon className="h-5 w-5" aria-hidden />

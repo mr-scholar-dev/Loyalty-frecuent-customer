@@ -16,7 +16,7 @@ const FEATURES = [
 
 export function PricingPreview() {
   return (
-    <section className="border-b py-20 sm:py-24">
+    <section className="border-b py-24 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div className="max-w-lg">
@@ -55,7 +55,7 @@ export function PricingPreview() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-primary/30 bg-card p-6 shadow-sm ring-1 ring-primary/10 sm:p-8">
+          <div className="shadow-float rounded-2xl border border-primary/30 bg-card p-7 ring-1 ring-primary/10 sm:p-9">
             <div className="flex items-baseline justify-between">
               <span className="text-lg font-semibold">Plan Pro</span>
               <span className="text-right">

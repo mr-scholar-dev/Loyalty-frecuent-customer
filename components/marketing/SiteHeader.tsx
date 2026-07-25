@@ -71,7 +71,7 @@ export function SiteHeader() {
 
         <nav
           aria-label="Principal"
-          className="hidden items-center gap-7 md:flex"
+          className="hidden items-center gap-7 lg:flex"
         >
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.label} item={item} />
@@ -115,7 +115,7 @@ export function SiteHeader() {
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
           >
             {open ? (
               <X className="h-5 w-5" aria-hidden />
@@ -129,7 +129,7 @@ export function SiteHeader() {
       {open && (
         <div
           id="mobile-menu"
-          className="border-t border-border/70 bg-background md:hidden"
+          className="border-t border-border/70 bg-background lg:hidden"
         >
           <nav
             aria-label="Menú móvil"
