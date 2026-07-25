@@ -1,45 +1,51 @@
 import Link from "next/link";
-import { Droplets } from "lucide-react";
 import { CONTACT_PHONE, WHATSAPP_URL } from "@/lib/site";
+import { Logo } from "./Logo";
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from "./site-nav";
 
-const linkClass = "hover:text-foreground";
+const linkClass =
+  "rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-/** Marketing footer shared by the public landing + pricing pages. */
+/** Marketing footer. Only links to routes/sections that exist (no dead links). */
 export function SiteFooter() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="border-t bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="border-t bg-card">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Droplets className="h-4 w-4" aria-hidden />
-              </span>
-              <span className="font-semibold">Loyalty Web</span>
-            </div>
+            <Logo />
             <p className="max-w-xs text-sm text-muted-foreground">
-              Fidelización digital para servicentros. Tarjetas con QR, lavados y
-              recompensas — sin app que instalar.
+              {PRODUCT_TAGLINE}
             </p>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Producto</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+          <nav aria-label="Producto" className="space-y-3 text-sm">
+            <p className="font-semibold text-foreground">Producto</p>
+            <ul className="space-y-2">
               <li>
                 <Link
-                  href={{ pathname: "/", hash: "features" }}
+                  href={{ pathname: "/", hash: "plataforma" }}
                   className={linkClass}
                 >
-                  Características
+                  Plataforma
                 </Link>
               </li>
               <li>
                 <Link
-                  href={{ pathname: "/", hash: "how" }}
+                  href={{ pathname: "/", hash: "como-funciona" }}
                   className={linkClass}
                 >
                   Cómo funciona
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={{ pathname: "/", hash: "funciones" }}
+                  className={linkClass}
+                >
+                  Funciones
                 </Link>
               </li>
               <li>
@@ -48,27 +54,22 @@ export function SiteFooter() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Cuenta</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+          <nav aria-label="Cuenta" className="space-y-3 text-sm">
+            <p className="font-semibold text-foreground">Cuenta</p>
+            <ul className="space-y-2">
               <li>
                 <Link href="/login" className={linkClass}>
                   Ingresar
                 </Link>
               </li>
-              <li>
-                <Link href="/el-sol" className={linkClass}>
-                  Ver demo
-                </Link>
-              </li>
             </ul>
-          </div>
+          </nav>
 
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Contacto</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+          <nav aria-label="Contacto" className="space-y-3 text-sm">
+            <p className="font-semibold text-foreground">Contacto</p>
+            <ul className="space-y-2">
               <li>
                 <a
                   href={WHATSAPP_URL}
@@ -80,11 +81,12 @@ export function SiteFooter() {
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
 
         <div className="mt-10 border-t pt-6 text-xs text-muted-foreground">
-          © 2026 Loyalty Web. Hecho para servicentros de Costa Rica.
+          © {year} {PRODUCT_NAME}. Hecho para negocios automotrices de Costa
+          Rica.
         </div>
       </div>
     </footer>

@@ -17,25 +17,49 @@ const mono = JetBrains_Mono({
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+const title = "Fidelización digital para servicentros | Loyalty Web";
+const description =
+  "Administra clientes, visitas y recompensas con una plataforma digital de fidelización para servicentros y negocios automotrices. Sin apps que instalar.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Loyalty Web · Fidelización para servicentros",
+    default: title,
     template: "%s · Loyalty Web",
   },
-  description:
-    "Plataforma multiempresa de fidelización para servicentros: tarjetas digitales con QR, programas de lavados y recompensas automáticas.",
+  description,
   applicationName: "Loyalty Web",
+  keywords: [
+    "fidelización",
+    "servicentros",
+    "autolavado",
+    "clientes frecuentes",
+    "recompensas",
+    "retención de clientes",
+  ],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "Loyalty Web",
     statusBarStyle: "default",
   },
+  openGraph: {
+    type: "website",
+    siteName: "Loyalty Web",
+    title,
+    description,
+    url: appUrl,
+    locale: "es_CR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#087F78",
   width: "device-width",
   initialScale: 1,
 };

@@ -34,6 +34,13 @@ const config: Config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          soft: "hsl(var(--primary-soft))",
+        },
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        surface: {
+          dark: "hsl(var(--surface-dark))",
+          "dark-foreground": "hsl(var(--surface-dark-foreground))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
