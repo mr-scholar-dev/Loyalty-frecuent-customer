@@ -2,7 +2,7 @@ import { MembershipStatus } from "@/types/domain";
 import { cn } from "@/lib/utils";
 
 const STYLES: Record<MembershipStatus, string> = {
-  [MembershipStatus.Active]: "bg-emerald-100 text-emerald-700",
+  [MembershipStatus.Active]: "bg-success/10 text-success",
   [MembershipStatus.Blocked]: "bg-destructive/10 text-destructive",
   [MembershipStatus.Expired]: "bg-muted text-muted-foreground",
 };

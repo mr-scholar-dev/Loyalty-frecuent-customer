@@ -3,6 +3,7 @@ import { Droplets, LogOut } from "lucide-react";
 import { getActiveMembership, getCurrentUser } from "@/lib/supabase/auth";
 import { logout } from "@/actions/auth";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
+import { SectionBreadcrumb } from "@/components/dashboard/SectionBreadcrumb";
 import { Copilot } from "@/components/dashboard/Copilot";
 
 /**
@@ -24,31 +25,43 @@ export default async function DashboardLayout({
       <aside className="flex flex-col border-b bg-card p-3 lg:border-b-0 lg:border-r">
         <Link
           href="/dashboard"
-          className="mb-4 hidden items-center gap-2 px-3 pt-2 lg:flex"
+          className="mb-5 hidden items-center gap-2 px-2 pt-1.5 lg:flex"
         >
-          <Droplets className="h-5 w-5 text-primary" aria-hidden />
-          <span className="font-bold">Loyalty Web</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <Droplets className="h-[18px] w-[18px]" aria-hidden />
+          </span>
+          <span className="text-[15px] font-semibold tracking-tight">
+            Loyalty Web
+          </span>
         </Link>
 
         <SidebarNav />
 
         {user && (
           <div className="mt-4 border-t pt-3 lg:mt-auto">
-            {membership && (
-              <p className="px-3 text-xs font-medium text-muted-foreground">
-                {membership.organizationName}
-              </p>
-            )}
-            <div className="flex items-center justify-between gap-2 px-3 py-1">
-              <span className="min-w-0 truncate text-xs text-muted-foreground">
-                {user.email}
-                {membership ? ` · ${membership.role}` : ""}
+            <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold uppercase text-primary"
+                aria-hidden
+              >
+                {(membership?.organizationName ?? user.email ?? "?").charAt(0)}
               </span>
+              <div className="min-w-0 flex-1 leading-tight">
+                {membership && (
+                  <p className="truncate text-xs font-medium text-foreground">
+                    {membership.organizationName}
+                  </p>
+                )}
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {user.email}
+                  {membership ? ` · ${membership.role}` : ""}
+                </p>
+              </div>
               <form action={logout}>
                 <button
                   type="submit"
                   aria-label="Cerrar sesión"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <LogOut className="h-4 w-4" aria-hidden />
                 </button>
@@ -60,12 +73,12 @@ export default async function DashboardLayout({
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-background/80 px-4 backdrop-blur">
           <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-            <Droplets className="h-5 w-5 text-primary" aria-hidden />
-            <span className="text-sm font-bold">Loyalty Web</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Droplets className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="text-sm font-semibold">Loyalty Web</span>
           </Link>
-          <span className="hidden text-xs text-muted-foreground lg:inline">
-            Tu copiloto conoce esta pantalla y puede ayudarte a hacer cosas.
-          </span>
+          <SectionBreadcrumb />
           <Copilot />
         </header>
         <div className="flex-1">{children}</div>

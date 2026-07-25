@@ -38,6 +38,7 @@ const config: Config = {
         },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
         surface: {
           dark: "hsl(var(--surface-dark))",
           "dark-foreground": "hsl(var(--surface-dark-foreground))",

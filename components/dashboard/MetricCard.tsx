@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface MetricCardProps {
   label: string;
@@ -16,21 +16,25 @@ export function MetricCard({
   hint,
 }: MetricCardProps) {
   return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-2 p-4">
-        <div className="min-w-0">
-          <p className="truncate text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold tabular-nums">{value}</p>
-          {hint && (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {hint}
-            </p>
-          )}
-        </div>
-        <div className="rounded-lg bg-primary/10 p-2 text-primary">
-          <Icon className="h-5 w-5" aria-hidden />
-        </div>
-      </CardContent>
-    </Card>
+    <div
+      className={cn(
+        "shadow-soft rounded-xl border bg-card p-4 transition-colors hover:border-primary/30",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <Icon className="h-4 w-4" aria-hidden />
+        </span>
+      </div>
+      <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight">
+        {value}
+      </p>
+      {hint && (
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</p>
+      )}
+    </div>
   );
 }

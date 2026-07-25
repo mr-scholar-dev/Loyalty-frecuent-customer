@@ -7,6 +7,7 @@ import {
   Loader2,
   Search,
   ShieldAlert,
+  Trophy,
   XCircle,
 } from "lucide-react";
 import type {
@@ -25,7 +26,11 @@ import { Label } from "@/components/ui/label";
 import { ProgressDots } from "@/components/loyalty-card/ProgressDots";
 import { CameraScanner } from "@/components/scanner/CameraScanner";
 
-type Receipt = { kind: "success" | "error"; message: string };
+type Receipt = {
+  kind: "success" | "error";
+  message: string;
+  celebrate?: boolean;
+};
 type PendingAction = "visit" | "redeem" | null;
 
 const ERROR_MESSAGES: Record<
@@ -79,14 +84,17 @@ export function ScanConsole() {
 
       if (result.ok) {
         setView(result.view);
+        const rewardMoment =
+          action === "redeem" || (action === "visit" && result.rewardEarned);
         setReceipt({
           kind: "success",
+          celebrate: rewardMoment,
           message:
             action === "visit"
               ? result.rewardEarned
-                ? "¡Lavado registrado y recompensa desbloqueada!"
+                ? "¡Recompensa desbloqueada!"
                 : `Lavado registrado. Progreso ${result.view.progress.current}/${result.view.progress.required}.`
-              : "Recompensa canjeada.",
+              : "Recompensa canjeada",
         });
       } else {
         setReceipt({ kind: "error", message: ERROR_MESSAGES[result.reason] });
@@ -111,6 +119,8 @@ export function ScanConsole() {
             }}
             placeholder="/c/… o pega el token"
             autoComplete="off"
+            autoFocus
+            enterKeyHint="search"
           />
           <Button
             onClick={() => doLookup(value)}
@@ -155,7 +165,7 @@ export function ScanConsole() {
               className={
                 isBlocked
                   ? "rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive"
-                  : "rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700"
+                  : "rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success"
               }
             >
               {isBlocked ? "Bloqueada" : "Activa"}
@@ -169,14 +179,14 @@ export function ScanConsole() {
                 {view.progress.remainingLabel}
               </span>
             </div>
-            <div className="text-slate-700">
+            <div className="text-foreground">
               <ProgressDotsDark
                 current={view.progress.current}
                 required={view.progress.required}
               />
             </div>
             {view.progress.availableRewards > 0 && (
-              <p className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
+              <p className="inline-flex items-center gap-1 text-sm font-semibold text-success">
                 <Gift className="h-4 w-4" aria-hidden />
                 {view.progress.availableRewards} recompensa(s) disponible(s)
               </p>
@@ -239,23 +249,41 @@ export function ScanConsole() {
       )}
 
       {/* Receipt */}
-      {receipt && (
-        <p
-          role="status"
-          className={
-            receipt.kind === "success"
-              ? "flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
-              : "flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive"
-          }
-        >
-          {receipt.kind === "success" ? (
-            <CheckCircle2 className="h-4 w-4" aria-hidden />
-          ) : (
-            <XCircle className="h-4 w-4" aria-hidden />
-          )}
-          {receipt.message}
-        </p>
-      )}
+      {receipt &&
+        (receipt.celebrate ? (
+          <div
+            role="status"
+            className="animate-pop flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-6 text-center"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Trophy className="h-6 w-6" aria-hidden />
+            </span>
+            <p className="text-base font-semibold text-primary">
+              {receipt.message}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {receipt.message.includes("desbloqueada")
+                ? "El cliente ya puede canjear su lavado gratis."
+                : "Lavado gratis entregado al cliente."}
+            </p>
+          </div>
+        ) : (
+          <p
+            role="status"
+            className={
+              receipt.kind === "success"
+                ? "flex items-center gap-2 rounded-md bg-success/10 px-3 py-2 text-sm font-medium text-success"
+                : "flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive"
+            }
+          >
+            {receipt.kind === "success" ? (
+              <CheckCircle2 className="h-4 w-4" aria-hidden />
+            ) : (
+              <XCircle className="h-4 w-4" aria-hidden />
+            )}
+            {receipt.message}
+          </p>
+        ))}
     </div>
   );
 }

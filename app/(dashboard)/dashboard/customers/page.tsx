@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { MembershipStatus } from "@/types/domain";
 import { listMemberships } from "@/lib/loyalty/admin-queries";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 
 export const metadata: Metadata = { title: "Clientes" };
 export const dynamic = "force-dynamic";
@@ -51,9 +52,12 @@ export default async function CustomersPage({ searchParams }: PageProps) {
         <Input
           name="q"
           defaultValue={q ?? ""}
-          placeholder="Nombre, teléfono o placa"
+          placeholder="Buscar por nombre, teléfono o placa…"
           className="max-w-xs"
           aria-label="Buscar"
+          autoFocus
+          autoComplete="off"
+          enterKeyHint="search"
         />
         <select
           name="status"
@@ -110,7 +114,7 @@ export default async function CustomersPage({ searchParams }: PageProps) {
                 <td className="px-4 py-2.5 tabular-nums">
                   {item.progress.current}/{item.progress.required}
                   {item.progress.availableRewards > 0 && (
-                    <span className="ml-1 text-xs font-medium text-emerald-700">
+                    <span className="ml-1 text-xs font-medium text-success">
                       +{item.progress.availableRewards}🎁
                     </span>
                   )}
@@ -128,11 +132,28 @@ export default async function CustomersPage({ searchParams }: PageProps) {
             ))}
             {items.length === 0 && (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-muted-foreground"
-                >
-                  Sin resultados.
+                <td colSpan={5} className="p-0">
+                  {q ? (
+                    <EmptyState
+                      icon={Search}
+                      title={`Sin resultados para «${q}»`}
+                      description="Prueba con otro nombre, teléfono o placa."
+                      action={{
+                        label: "Ver todos los clientes",
+                        href: "/dashboard/customers",
+                      }}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={Users}
+                      title="Aún no tienes clientes"
+                      description="Comparte tu QR de registro para que tu primer cliente cree su tarjeta digital."
+                      action={{
+                        label: "Ver QR de registro",
+                        href: "/dashboard/qr",
+                      }}
+                    />
+                  )}
                 </td>
               </tr>
             )}

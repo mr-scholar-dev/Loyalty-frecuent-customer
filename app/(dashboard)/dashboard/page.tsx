@@ -15,6 +15,8 @@ import {
 } from "@/lib/loyalty/admin-queries";
 import { EVENT_LABELS, formatDateTimeCR } from "@/lib/loyalty/event-format";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,9 +38,7 @@ function ActivityRow({ item }: { item: RecentActivityItem }) {
         <span
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-            isReward
-              ? "bg-amber-100 text-amber-700"
-              : "bg-sky-100 text-sky-700",
+            isReward ? "bg-warning/10 text-warning" : "bg-info/10 text-info",
           )}
         >
           {isReward ? (
@@ -69,6 +69,9 @@ function ActivityRow({ item }: { item: RecentActivityItem }) {
  */
 export default async function DashboardPage() {
   const metrics = await getDashboardMetrics(new Date().toISOString());
+  const hasCustomers = metrics.totalCustomers > 0;
+  const hasVisits = metrics.recentActivity.length > 0;
+  const fullyOnboarded = hasCustomers && hasVisits;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -87,98 +90,124 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard
-          label="Clientes totales"
-          value={metrics.totalCustomers}
-          icon={Users}
-        />
-        <MetricCard
-          label="Nuevos este mes"
-          value={metrics.newCustomersThisMonth}
-          icon={UserPlus}
-        />
-        <MetricCard
-          label="Lavados hoy"
-          value={metrics.washesToday}
-          icon={Droplets}
-          hint={`${metrics.washesThisMonth} este mes`}
-        />
-        <MetricCard
-          label="Recompensas pendientes"
-          value={metrics.rewardsPending}
-          icon={Gift}
-        />
-        <MetricCard
-          label="Recompensas generadas"
-          value={metrics.rewardsEarnedThisMonth}
-          icon={Trophy}
-          hint="este mes"
-        />
-        <MetricCard
-          label="Recompensas canjeadas"
-          value={metrics.rewardsRedeemedThisMonth}
-          icon={Gift}
-          hint="este mes"
-        />
-      </div>
+      {!fullyOnboarded && (
+        <div className="mb-6">
+          <OnboardingChecklist
+            hasCustomers={hasCustomers}
+            hasVisits={hasVisits}
+          />
+        </div>
+      )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Actividad reciente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {metrics.recentActivity.length > 0 ? (
-              <ul className="divide-y">
-                {metrics.recentActivity.map((item, i) => (
-                  <ActivityRow key={i} item={item} />
-                ))}
-              </ul>
-            ) : (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Sin actividad todavía.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      {/* A brand-new account sees only the guided setup — no empty metrics. */}
+      {!hasCustomers ? null : (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <MetricCard
+              label="Clientes totales"
+              value={metrics.totalCustomers}
+              icon={Users}
+            />
+            <MetricCard
+              label="Nuevos este mes"
+              value={metrics.newCustomersThisMonth}
+              icon={UserPlus}
+            />
+            <MetricCard
+              label="Lavados hoy"
+              value={metrics.washesToday}
+              icon={Droplets}
+              hint={`${metrics.washesThisMonth} este mes`}
+            />
+            <MetricCard
+              label="Recompensas pendientes"
+              value={metrics.rewardsPending}
+              icon={Gift}
+            />
+            <MetricCard
+              label="Recompensas generadas"
+              value={metrics.rewardsEarnedThisMonth}
+              icon={Trophy}
+              hint="este mes"
+            />
+            <MetricCard
+              label="Recompensas canjeadas"
+              value={metrics.rewardsRedeemedThisMonth}
+              icon={Gift}
+              hint="este mes"
+            />
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">A una visita del premio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {metrics.nearReward.length > 0 ? (
-              <ul className="divide-y">
-                {metrics.nearReward.map((item, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center justify-between py-2.5"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{item.customerName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.licensePlate}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                      {item.current}/{item.required}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Nadie está a una visita del premio ahora mismo.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Actividad reciente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {metrics.recentActivity.length > 0 ? (
+                  <ul className="divide-y">
+                    {metrics.recentActivity.map((item, i) => (
+                      <ActivityRow key={i} item={item} />
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState
+                    icon={Droplets}
+                    title="Sin actividad todavía"
+                    description="Registra un lavado para ver aquí el movimiento del programa."
+                    action={{
+                      label: "Escanear tarjeta",
+                      href: "/dashboard/scan",
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
 
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        Métricas en vivo de tu organización (bajo RLS).
-      </p>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  A una visita del premio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {metrics.nearReward.length > 0 ? (
+                  <ul className="divide-y">
+                    {metrics.nearReward.map((item, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center justify-between py-2.5"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">
+                            {item.customerName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.licensePlate}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+                          {item.current}/{item.required}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState
+                    icon={Trophy}
+                    title="Nadie está cerca del premio"
+                    description="Cuando un cliente esté a un lavado de su recompensa, aparecerá aquí."
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Métricas en vivo de tu organización (bajo RLS).
+          </p>
+        </>
+      )}
     </main>
   );
 }

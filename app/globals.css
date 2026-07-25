@@ -23,8 +23,9 @@
     --muted-foreground: 220 14% 40%; /* #586174 */
     --accent: 216 22% 94%;
     --accent-foreground: 220 40% 12%;
-    --success: 154 72% 31%; /* #168A62 */
+    --success: 145 63% 34%; /* emerald — distinct from the teal brand */
     --warning: 34 72% 49%; /* #D98B22 */
+    --info: 213 78% 46%; /* professional blue for neutral/operational accents */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     --border: 216 24% 91%; /* #E4E8EE */
@@ -52,6 +53,7 @@
     --accent-foreground: 210 40% 98%;
     --success: 154 60% 45%;
     --warning: 34 80% 58%;
+    --info: 213 80% 62%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
@@ -73,9 +75,35 @@
   /* Faint grid texture for section backgrounds. */
   .bg-grid {
     background-image:
-      linear-gradient(to right, hsl(var(--border) / 0.6) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--border) / 0.6) 1px, transparent 1px);
-    background-size: 56px 56px;
+      linear-gradient(to right, hsl(var(--border) / 0.55) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.55) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Natural, layered depth — soft not harsh. */
+  .shadow-soft {
+    box-shadow:
+      0 1px 2px hsl(220 48% 8% / 0.04),
+      0 6px 16px -8px hsl(220 48% 8% / 0.1);
+  }
+  .shadow-float {
+    box-shadow:
+      0 1px 2px hsl(220 48% 8% / 0.05),
+      0 16px 44px -16px hsl(220 48% 8% / 0.22);
+  }
+  /* Very light glass — only where it earns its place. */
+  .glass {
+    background-color: hsl(var(--card) / 0.72);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  /* Subtle ambient light behind the hero mockup (no neon, no blob). */
+  .ambient-primary {
+    background: radial-gradient(
+      60% 55% at 60% 30%,
+      hsl(var(--primary) / 0.1),
+      transparent 70%
+    );
   }
   /* Fade a texture out toward the edges. */
   .mask-fade-b {
@@ -94,6 +122,20 @@
     }
     .animate-float {
       animation: float 6s ease-in-out infinite;
+    }
+    /* Elegant confirmation for a reward unlock — a subtle pop, no confetti. */
+    .animate-pop {
+      animation: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+  }
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
     }
   }
   @keyframes rise {
