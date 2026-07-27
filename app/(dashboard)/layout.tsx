@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Droplets, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { getActiveMembership, getCurrentUser } from "@/lib/supabase/auth";
 import { logout } from "@/actions/auth";
+import { BrandMark } from "@/components/BrandMark";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { SectionBreadcrumb } from "@/components/dashboard/SectionBreadcrumb";
 import { Copilot } from "@/components/dashboard/Copilot";
@@ -27,9 +28,7 @@ export default async function DashboardLayout({
           href="/dashboard"
           className="mb-5 hidden items-center gap-2 px-2 pt-1.5 lg:flex"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Droplets className="h-[18px] w-[18px]" aria-hidden />
-          </span>
+          <BrandMark className="h-8 w-8 shrink-0" />
           <span className="text-[15px] font-semibold tracking-tight">
             Loyalty Web
           </span>
@@ -73,9 +72,7 @@ export default async function DashboardLayout({
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-background/80 px-4 backdrop-blur">
           <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Droplets className="h-4 w-4" aria-hidden />
-            </span>
+            <BrandMark className="h-7 w-7 shrink-0" />
             <span className="text-sm font-semibold">Loyalty Web</span>
           </Link>
           <SectionBreadcrumb />

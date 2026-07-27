@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/BrandMark";
 
 interface NavEntry {
   label: string;
@@ -212,9 +213,7 @@ export function ProductPreview({
         <aside className="hidden w-44 shrink-0 flex-col justify-between border-r bg-card p-3 sm:flex">
           <div>
             <div className="mb-4 flex items-center gap-2 px-1">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Gauge className="h-3.5 w-3.5" />
-              </span>
+              <BrandMark className="h-6 w-6 shrink-0" />
               <span className="text-xs font-semibold">Loyalty Web</span>
             </div>
             <p className="px-2 pb-1.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70">
