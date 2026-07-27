@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { askAssistant } from "@/actions/ai";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,9 @@ const PAGES: { match: (p: string) => boolean; info: PageInfo }[] = [
     match: (p) => /^\/dashboard\/customers\/[^/]+/.test(p),
     info: {
       label: "Detalle de cliente",
-      suggestions: ["Redáctame un mensaje de WhatsApp para reactivar a este cliente."],
+      suggestions: [
+        "Redáctame un mensaje de WhatsApp para reactivar a este cliente.",
+      ],
     },
   },
   {
@@ -144,6 +146,7 @@ function CopilotDrawer({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -168,10 +171,9 @@ function CopilotDrawer({
       const res = await askAssistant(q, pageLabel);
       if (res.ok) {
         setTurns((t) => [...t, { role: "assistant", content: res.text }]);
-        // No router.refresh() here: the server action already calls
-        // revalidatePath when it writes, which refreshes the page behind the
-        // panel. A second refresh would double-render and race the Supabase
-        // token refresh, invalidating the session.
+        // Refresh the page behind the panel so any change the assistant made
+        // (e.g. a new Kanban task) shows immediately.
+        router.refresh();
       } else {
         setError(res.message);
       }
@@ -182,7 +184,7 @@ function CopilotDrawer({
     // Non-modal: the wrapper ignores pointer events so the app behind stays
     // fully visible and interactive; only the panel captures clicks.
     <div className="pointer-events-none fixed inset-0 z-50">
-      <aside className="animate-in slide-in-from-right-8 pointer-events-auto absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l bg-card shadow-2xl duration-200">
+      <aside className="pointer-events-auto absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l bg-card shadow-2xl duration-200 animate-in slide-in-from-right-8">
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-3">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-semibold">
@@ -274,7 +276,11 @@ function CopilotDrawer({
             className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             disabled={isPending}
           />
-          <Button type="submit" size="icon" disabled={isPending || !input.trim()}>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isPending || !input.trim()}
+          >
             <Send className="h-4 w-4" aria-hidden />
           </Button>
         </form>
