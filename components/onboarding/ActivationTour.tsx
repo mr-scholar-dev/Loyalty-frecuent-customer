@@ -20,9 +20,13 @@ import { cn } from "@/lib/utils";
 import {
   PRO_PRICE_USD,
   PRO_PRICE_USD_ANNUAL,
+  PRO_PRICE_USD_ANNUAL_TOTAL,
+  PRO_ANNUAL_SAVINGS_PCT,
   WHATSAPP_URL,
   CONTACT_PHONE,
 } from "@/lib/site";
+
+type PlanInterval = "monthly" | "annual";
 
 interface Slide {
   icon: LucideIcon;
@@ -64,6 +68,7 @@ const PLAN_FEATURES = [
 
 export function ActivationTour({ orgName }: { orgName: string }) {
   const [index, setIndex] = useState(0);
+  const [plan, setPlan] = useState<PlanInterval>("monthly");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
 
@@ -81,7 +86,7 @@ export function ActivationTour({ orgName }: { orgName: string }) {
   function activate() {
     setMessage(null);
     startTransition(async () => {
-      const result = await createCheckout();
+      const result = await createCheckout(plan);
       if (result && !result.ok) setMessage(result.message);
     });
   }
@@ -164,15 +169,58 @@ export function ActivationTour({ orgName }: { orgName: string }) {
             Plan Pro
           </span>
           <span className="text-right">
-            <span className="font-mono text-3xl font-bold">${PRO_PRICE_USD}</span>
+            <span className="font-mono text-3xl font-bold">
+              ${plan === "annual" ? PRO_PRICE_USD_ANNUAL : PRO_PRICE_USD}
+            </span>
             <span className="text-sm font-normal text-muted-foreground">
               {" "}
               /mes
             </span>
             <span className="block text-xs text-primary">
-              o ${PRO_PRICE_USD_ANNUAL}/mes anual
+              {plan === "annual"
+                ? `facturado $${PRO_PRICE_USD_ANNUAL_TOTAL}/año`
+                : "facturado mensual"}
             </span>
           </span>
+        </div>
+
+        {/* Billing interval toggle */}
+        <div
+          className="mt-4 inline-flex w-full rounded-lg border bg-muted/40 p-0.5 text-sm"
+          role="tablist"
+          aria-label="Ciclo de facturación"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={plan === "monthly"}
+            onClick={() => setPlan("monthly")}
+            className={cn(
+              "flex-1 rounded-md px-3 py-1.5 font-medium transition-colors",
+              plan === "monthly"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground",
+            )}
+          >
+            Mensual
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={plan === "annual"}
+            onClick={() => setPlan("annual")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors",
+              plan === "annual"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground",
+            )}
+          >
+            Anual
+            <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-success">
+              −{PRO_ANNUAL_SAVINGS_PCT}%
+            </span>
+          </button>
         </div>
 
         <ul className="mt-5 space-y-2 text-sm">

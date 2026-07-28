@@ -15,6 +15,12 @@ export function getStripe(): Stripe | null {
   return new Stripe(key);
 }
 
-export function getProPriceId(): string | null {
+export type PlanInterval = "monthly" | "annual";
+
+/** Stripe price id for the chosen billing interval. Falls back to monthly. */
+export function getProPriceId(plan: PlanInterval = "monthly"): string | null {
+  if (plan === "annual") {
+    return process.env.STRIPE_PRICE_ID_ANNUAL ?? null;
+  }
   return process.env.STRIPE_PRICE_ID ?? null;
 }

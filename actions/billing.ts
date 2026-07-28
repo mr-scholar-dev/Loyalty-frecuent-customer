@@ -3,7 +3,7 @@
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { getActiveMembership } from "@/lib/supabase/auth";
-import { getProPriceId, getStripe } from "@/lib/stripe";
+import { getProPriceId, getStripe, type PlanInterval } from "@/lib/stripe";
 
 /**
  * Start a Stripe Checkout for the Pro subscription (per organization).
@@ -18,7 +18,9 @@ export interface CheckoutResult {
   message: string;
 }
 
-export async function createCheckout(): Promise<CheckoutResult> {
+export async function createCheckout(
+  plan: PlanInterval = "monthly",
+): Promise<CheckoutResult> {
   const membership = await getActiveMembership();
   if (!membership || membership.role !== "owner") {
     return {
@@ -28,7 +30,7 @@ export async function createCheckout(): Promise<CheckoutResult> {
   }
 
   const stripe = getStripe();
-  const priceId = getProPriceId();
+  const priceId = getProPriceId(plan);
   if (!stripe || !priceId) {
     return {
       ok: false,
@@ -44,7 +46,7 @@ export async function createCheckout(): Promise<CheckoutResult> {
     success_url: `${appUrl}/dashboard/billing?ok=1`,
     cancel_url: `${appUrl}/dashboard/billing`,
     client_reference_id: membership.organizationId,
-    metadata: { organization_id: membership.organizationId },
+    metadata: { organization_id: membership.organizationId, plan },
   });
 
   if (!session.url) {
