@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveMembership } from "@/lib/supabase/auth";
+import { getActiveMembership, hasPaidAccess } from "@/lib/supabase/auth";
 
 /**
  * Kanban actions. Run under the user's session — RLS scopes everything to the
@@ -12,6 +12,8 @@ import { getActiveMembership } from "@/lib/supabase/auth";
 export type KanbanResult = { ok: true } | { ok: false; message: string };
 
 async function orgId(): Promise<string | null> {
+  // Payment gate: block writes from unpaid organizations.
+  if (!(await hasPaidAccess())) return null;
   return (await getActiveMembership())?.organizationId ?? null;
 }
 

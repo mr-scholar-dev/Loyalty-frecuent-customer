@@ -4,7 +4,11 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getActiveMembership, getCurrentUser } from "@/lib/supabase/auth";
+import {
+  getActiveMembership,
+  getCurrentUser,
+  hasPaidAccess,
+} from "@/lib/supabase/auth";
 
 /**
  * Team management (§6, §7). Only the owner can invite/manage members.
@@ -23,6 +27,8 @@ export type InviteResult =
 export type TeamActionResult = { ok: true } | { ok: false; message: string };
 
 async function requireOwnerOrgId(): Promise<string | null> {
+  // Payment gate: block writes from unpaid organizations.
+  if (!(await hasPaidAccess())) return null;
   const membership = await getActiveMembership();
   if (!membership || membership.role !== "owner") return null;
   return membership.organizationId;

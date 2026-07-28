@@ -18,16 +18,39 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
   return user;
 });
 
+/**
+ * Platform-wide superadmin allowlist (comma-separated emails in
+ * SUPERADMIN_EMAILS). Superadmins bypass the payment gate and can manage every
+ * organization. This is an app-layer convenience; RLS remains the real boundary.
+ */
+function superadminEmails(): Set<string> {
+  return new Set(
+    (process.env.SUPERADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+/** Whether the current user is a platform superadmin. */
+export const isSuperadmin = cache(async function isSuperadmin(): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user?.email) return false;
+  return superadminEmails().has(user.email.toLowerCase());
+});
+
 export interface ActiveMembership {
   organizationId: string;
   organizationName: string;
   organizationSlug: string;
   role: string;
+  /** Organization subscription status: 'trial' | 'active' | 'suspended'. */
+  status: string;
 }
 
 /**
- * The current user's active organization membership (org + role), read under
- * RLS. Returns null if not authenticated or not a member of any org.
+ * The current user's active organization membership (org + role + status), read
+ * under RLS. Returns null if not authenticated or not a member of any org.
  */
 export const getActiveMembership = cache(async function getActiveMembership(): Promise<ActiveMembership | null> {
   const supabase = await createClient();
@@ -45,7 +68,7 @@ export const getActiveMembership = cache(async function getActiveMembership(): P
 
   const { data: org } = await supabase
     .from("organizations")
-    .select("name, slug")
+    .select("name, slug, status")
     .eq("id", membership.organization_id)
     .maybeSingle();
 
@@ -54,5 +77,17 @@ export const getActiveMembership = cache(async function getActiveMembership(): P
     organizationName: org?.name ?? "",
     organizationSlug: org?.slug ?? "",
     role: membership.role,
+    status: org?.status ?? "trial",
   };
+});
+
+/**
+ * Whether the current user may fully use the app: a superadmin, or the owner/
+ * member of an organization whose subscription is active (paid). Used both to
+ * gate the dashboard shell and to reject writes from unpaid organizations.
+ */
+export const hasPaidAccess = cache(async function hasPaidAccess(): Promise<boolean> {
+  if (await isSuperadmin()) return true;
+  const membership = await getActiveMembership();
+  return membership?.status === "active";
 });

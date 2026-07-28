@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
-import { getActiveMembership, getCurrentUser } from "@/lib/supabase/auth";
+import { redirect } from "next/navigation";
+import { LogOut, ShieldCheck } from "lucide-react";
+import {
+  getActiveMembership,
+  getCurrentUser,
+  isSuperadmin,
+} from "@/lib/supabase/auth";
 import { logout } from "@/actions/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
@@ -16,10 +21,18 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, membership] = await Promise.all([
+  const [user, membership, superadmin] = await Promise.all([
     getCurrentUser(),
     getActiveMembership(),
+    isSuperadmin(),
   ]);
+
+  // Payment gate: only superadmins and organizations with an active (paid)
+  // subscription reach the app. Everyone else lands on the activation + tour
+  // screen until the payment clears (status → active).
+  if (user && !superadmin && membership?.status !== "active") {
+    redirect("/activar");
+  }
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
@@ -35,6 +48,16 @@ export default async function DashboardLayout({
         </Link>
 
         <SidebarNav />
+
+        {superadmin && (
+          <Link
+            href="/dashboard/admin"
+            className="mt-2 flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ShieldCheck className="h-4 w-4" aria-hidden />
+            Superadmin
+          </Link>
+        )}
 
         {user && (
           <div className="mt-4 border-t pt-3 lg:mt-auto">

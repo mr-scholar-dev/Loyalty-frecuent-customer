@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveMembership } from "@/lib/supabase/auth";
+import { getActiveMembership, hasPaidAccess } from "@/lib/supabase/auth";
 
 /**
  * Organization configuration actions (§7 Fase 7): branding, program and
@@ -14,11 +14,21 @@ export type OrgActionResult = { ok: true } | { ok: false; message: string };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
+/** Shared payment gate for org write actions. */
+async function paymentGate(): Promise<OrgActionResult | null> {
+  if (!(await hasPaidAccess())) {
+    return { ok: false, message: "Activá tu plan para usar esta función." };
+  }
+  return null;
+}
+
 export async function updateOrgSettings(input: {
   name: string;
   primaryColor: string;
   secondaryColor: string;
 }): Promise<OrgActionResult> {
+  const gate = await paymentGate();
+  if (gate) return gate;
   const membership = await getActiveMembership();
   if (!membership) return { ok: false, message: "Sesión no válida." };
   if (!input.name.trim())
@@ -53,6 +63,8 @@ export async function updateProgram(input: {
   rewardQuantity: number;
   rewardName: string;
 }): Promise<OrgActionResult> {
+  const gate = await paymentGate();
+  if (gate) return gate;
   const membership = await getActiveMembership();
   if (!membership) return { ok: false, message: "Sesión no válida." };
   if (
@@ -97,6 +109,8 @@ export async function createBranch(input: {
   name: string;
   code: string;
 }): Promise<OrgActionResult> {
+  const gate = await paymentGate();
+  if (gate) return gate;
   const membership = await getActiveMembership();
   if (!membership) return { ok: false, message: "Sesión no válida." };
   if (!input.name.trim() || !input.code.trim()) {
@@ -125,6 +139,8 @@ export async function setBranchStatus(
   branchId: string,
   status: "active" | "inactive",
 ): Promise<OrgActionResult> {
+  const gate = await paymentGate();
+  if (gate) return gate;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("branches")

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { hasPaidAccess } from "@/lib/supabase/auth";
 import {
   getStaffMembershipById,
   getStaffMembershipByToken,
@@ -41,6 +42,9 @@ async function callRpc(
   membershipId: string,
   idempotencyKey: string,
 ): Promise<MutationResult> {
+  // Payment gate: unpaid organizations can't register visits or redeem rewards.
+  if (!(await hasPaidAccess())) return { ok: false, reason: "not_authorized" };
+
   const supabase = await createClient();
   const { data, error } = await supabase.rpc(fn, {
     p_membership_id: membershipId,

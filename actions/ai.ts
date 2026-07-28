@@ -4,7 +4,7 @@ import { chat, isAIConfigured } from "@/lib/ai/openrouter";
 import { runAgent } from "@/lib/ai/agent";
 import { getBusinessContext } from "@/lib/ai/insights";
 import { getMembershipDetail } from "@/lib/loyalty/admin-queries";
-import { getActiveMembership } from "@/lib/supabase/auth";
+import { getActiveMembership, hasPaidAccess } from "@/lib/supabase/auth";
 
 /**
  * AI server actions. Everything runs server-side: the OpenRouter key never
@@ -41,6 +41,8 @@ function notConfigured(): AIResult {
 }
 
 async function requireOrg(): Promise<string | null> {
+  // Payment gate: the AI copilot is a paid feature.
+  if (!(await hasPaidAccess())) return null;
   return (await getActiveMembership())?.organizationId ?? null;
 }
 

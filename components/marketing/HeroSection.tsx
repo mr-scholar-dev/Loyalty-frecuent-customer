@@ -38,30 +38,30 @@ export function HeroSection() {
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href="/registro"
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "shadow-soft group w-full sm:w-auto",
               )}
             >
-              Solicitar una demo
+              Crear mi cuenta
               <ArrowRight
                 className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
                 aria-hidden
               />
-            </a>
-            <Link
-              href={{ pathname: "/", hash: "como-funciona" }}
+            </Link>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noreferrer"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
                 "w-full sm:w-auto",
               )}
             >
-              Ver cómo funciona
-            </Link>
+              Solicitar una demo
+            </a>
           </div>
 
           <ul className="mt-9 flex flex-col gap-x-6 gap-y-2.5 text-sm text-muted-foreground sm:flex-row sm:flex-wrap">

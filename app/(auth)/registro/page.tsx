@@ -10,13 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BrandMark } from "@/components/BrandMark";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 
-export const metadata: Metadata = { title: "Ingresar" };
+export const metadata: Metadata = { title: "Crear cuenta" };
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
-  // Already signed in → go to the dashboard.
+export default async function RegistroPage() {
+  // Already signed in → straight to the app (the gate decides trial vs active).
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
 
@@ -25,18 +25,20 @@ export default async function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-2 text-center">
           <BrandMark className="mx-auto h-11 w-11" />
-          <CardTitle className="text-xl">Loyalty Web</CardTitle>
-          <CardDescription>Panel del servicentro</CardDescription>
+          <CardTitle className="text-xl">Crea tu servicentro</CardTitle>
+          <CardDescription>
+            Registra tu negocio en Loyalty Web en un minuto.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <LoginForm />
+          <RegisterForm />
           <p className="text-center text-sm text-muted-foreground">
-            ¿No tienes cuenta?{" "}
+            ¿Ya tienes cuenta?{" "}
             <Link
-              href="/registro"
+              href="/login"
               className="font-medium text-primary hover:underline"
             >
-              Crea tu servicentro
+              Inicia sesión
             </Link>
           </p>
         </CardContent>

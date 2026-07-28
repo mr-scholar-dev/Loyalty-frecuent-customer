@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { WHATSAPP_URL } from "@/lib/site";
 import { Logo } from "./Logo";
 import { NAV_ITEMS, PRODUCT_NAME } from "./site-nav";
 
@@ -88,27 +87,23 @@ export function SiteHeader() {
           >
             Ingresar
           </Link>
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href="/registro"
             className={cn(
               buttonVariants({ size: "sm" }),
               "hidden sm:inline-flex",
             )}
           >
-            Solicitar demo
-          </a>
+            Crear cuenta
+          </Link>
 
           {/* Mobile: keep the primary action visible + a menu for the rest. */}
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href="/registro"
             className={cn(buttonVariants({ size: "sm" }), "sm:hidden")}
           >
-            Solicitar demo
-          </a>
+            Crear cuenta
+          </Link>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -152,6 +147,13 @@ export function SiteHeader() {
               )}
             >
               Ingresar
+            </Link>
+            <Link
+              href="/registro"
+              onClick={() => setOpen(false)}
+              className={cn(buttonVariants(), "w-full")}
+            >
+              Crear cuenta
             </Link>
           </nav>
         </div>
