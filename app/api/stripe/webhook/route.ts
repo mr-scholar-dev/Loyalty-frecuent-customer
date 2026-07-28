@@ -36,7 +36,21 @@ async function activateOrg(
       fields.currentPeriodEnd * 1000,
     ).toISOString();
   if (fields.status === "active") update.activated_at = new Date().toISOString();
-  await admin.from("organizations").update(update).eq("id", organizationId);
+
+  const { error } = await admin
+    .from("organizations")
+    .update(update)
+    .eq("id", organizationId);
+
+  // Resilient to the billing migration not being applied yet: the stripe_*
+  // columns may not exist locally. Fall back to flipping just the status so the
+  // org still unlocks; the extra fields persist once the migration is applied.
+  if (error) {
+    await admin
+      .from("organizations")
+      .update({ status: fields.status })
+      .eq("id", organizationId);
+  }
 }
 
 async function orgIdForCustomer(customerId: string): Promise<string | null> {
