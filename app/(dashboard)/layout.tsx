@@ -27,10 +27,14 @@ export default async function DashboardLayout({
     isSuperadmin(),
   ]);
 
+  // Defense in depth: the middleware only gates real browser navigations
+  // (sec-fetch-dest: document), so also require a session here.
+  if (!user) redirect("/login");
+
   // Payment gate: only superadmins and organizations with an active (paid)
   // subscription reach the app. Everyone else lands on the activation + tour
   // screen until the payment clears (status → active).
-  if (user && !superadmin && membership?.status !== "active") {
+  if (!superadmin && membership?.status !== "active") {
     redirect("/activar");
   }
 
