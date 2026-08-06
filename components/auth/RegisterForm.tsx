@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
-import {
-  registerOrganization,
-  type RegisterState,
-} from "@/actions/onboarding";
+import { registerOrganization, type RegisterState } from "@/actions/onboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,7 +86,8 @@ export function RegisterForm() {
         {pending ? "Creando tu cuenta…" : "Crear mi cuenta"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Sin tarjeta para registrarte. Activás tu plan para empezar a usar la app.
+        Sin tarjeta para registrarte. Activás tu plan para empezar a usar la
+        app.
       </p>
     </form>
   );

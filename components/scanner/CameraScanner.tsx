@@ -62,7 +62,11 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
 
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      if (!isMobile && typeof window !== "undefined" && window.BarcodeDetector) {
+      if (
+        !isMobile &&
+        typeof window !== "undefined" &&
+        window.BarcodeDetector
+      ) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
         });
@@ -131,7 +135,10 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
         );
       });
       try {
-        controlsRef.current = await Promise.race([startPromise, timeoutPromise]);
+        controlsRef.current = await Promise.race([
+          startPromise,
+          timeoutPromise,
+        ]);
       } finally {
         window.clearTimeout(timeoutId);
       }

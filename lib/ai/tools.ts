@@ -186,7 +186,8 @@ export async function runTool(
         .eq("organization_id", org)
         .limit(1)
         .maybeSingle();
-      if (!board) return ok("Error: abre el Kanban primero para crear el tablero.");
+      if (!board)
+        return ok("Error: abre el Kanban primero para crear el tablero.");
 
       const { data: columns } = await admin
         .from("kanban_columns")

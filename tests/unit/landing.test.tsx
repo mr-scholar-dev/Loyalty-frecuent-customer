@@ -46,11 +46,18 @@ describe("landing page", () => {
   });
 
   it("uses a wa.me checkout message for the pricing CTA", async () => {
-    const { PricingCards } = await import("@/components/marketing/PricingCards");
+    const { PricingCards } =
+      await import("@/components/marketing/PricingCards");
     render(<PricingCards />);
     const buy = screen.getByRole("link", { name: "Comprar Plan" });
-    expect(buy).toHaveAttribute("href", expect.stringContaining("https://wa.me/"));
-    expect(buy).toHaveAttribute("href", expect.stringContaining("%C2%BFCu%C3%A1les"));
+    expect(buy).toHaveAttribute(
+      "href",
+      expect.stringContaining("https://wa.me/"),
+    );
+    expect(buy).toHaveAttribute(
+      "href",
+      expect.stringContaining("%C2%BFCu%C3%A1les"),
+    );
   });
 
   it("exposes navigation anchors that map to existing sections", () => {

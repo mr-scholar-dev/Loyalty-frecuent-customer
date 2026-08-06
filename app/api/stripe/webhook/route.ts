@@ -28,14 +28,16 @@ async function activateOrg(
 ): Promise<void> {
   const admin = createAdminClient();
   const update: Record<string, unknown> = { status: fields.status };
-  if (fields.stripeCustomerId) update.stripe_customer_id = fields.stripeCustomerId;
+  if (fields.stripeCustomerId)
+    update.stripe_customer_id = fields.stripeCustomerId;
   if (fields.stripeSubscriptionId)
     update.stripe_subscription_id = fields.stripeSubscriptionId;
   if (fields.currentPeriodEnd)
     update.current_period_end = new Date(
       fields.currentPeriodEnd * 1000,
     ).toISOString();
-  if (fields.status === "active") update.activated_at = new Date().toISOString();
+  if (fields.status === "active")
+    update.activated_at = new Date().toISOString();
 
   const { error } = await admin
     .from("organizations")
@@ -67,7 +69,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!stripe || !webhookSecret) {
-    return NextResponse.json({ error: "Stripe no configurado." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Stripe no configurado." },
+      { status: 503 },
+    );
   }
 
   const signature = req.headers.get("stripe-signature");

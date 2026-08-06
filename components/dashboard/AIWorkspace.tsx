@@ -71,7 +71,10 @@ function NotConfigured() {
   return (
     <Card className="border-amber-300 bg-amber-50">
       <CardContent className="flex items-start gap-3 py-6">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+        <AlertTriangle
+          className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+          aria-hidden
+        />
         <div className="space-y-1 text-sm">
           <p className="font-semibold text-amber-900">IA no configurada</p>
           <p className="text-amber-800">
@@ -202,7 +205,11 @@ function Assistant() {
             className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             disabled={isPending}
           />
-          <Button type="submit" size="icon" disabled={isPending || !input.trim()}>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isPending || !input.trim()}
+          >
             <Send className="h-4 w-4" aria-hidden />
           </Button>
         </form>
@@ -243,7 +250,8 @@ function SummaryCard() {
         <Button variant="outline" onClick={run} disabled={isPending}>
           {isPending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Generando…
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />{" "}
+              Generando…
             </>
           ) : text ? (
             "Regenerar resumen"

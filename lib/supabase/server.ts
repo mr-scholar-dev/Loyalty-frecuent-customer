@@ -33,8 +33,7 @@ export const createClient = cache(async function createClient() {
             // drop only the clears. Genuine logout deletes cookies explicitly in
             // the logout action.
             const isAuthClear =
-              name.includes("-auth-token") &&
-              (!value || options?.maxAge === 0);
+              name.includes("-auth-token") && (!value || options?.maxAge === 0);
             if (isAuthClear) return;
             cookieStore.set(name, value, options);
           });

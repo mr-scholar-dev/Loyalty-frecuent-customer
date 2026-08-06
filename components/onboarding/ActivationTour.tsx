@@ -79,7 +79,10 @@ export function ActivationTour({ orgName }: { orgName: string }) {
 
   // Gentle auto-advance; pauses are unnecessary for a short 4-slide tour.
   useEffect(() => {
-    const id = setInterval(() => setIndex((i) => (i + 1) % SLIDES.length), 6000);
+    const id = setInterval(
+      () => setIndex((i) => (i + 1) % SLIDES.length),
+      6000,
+    );
     return () => clearInterval(id);
   }, []);
 
@@ -107,8 +110,8 @@ export function ActivationTour({ orgName }: { orgName: string }) {
           Tu cuenta está lista.
         </h1>
         <p className="mt-2 max-w-md text-muted-foreground">
-          Activá tu plan para empezar a usar Loyalty Web. Mientras tanto, este es
-          un recorrido rápido de lo que vas a tener.
+          Activá tu plan para empezar a usar Loyalty Web. Mientras tanto, este
+          es un recorrido rápido de lo que vas a tener.
         </p>
 
         <div className="shadow-soft mt-6 rounded-2xl border bg-card p-6">
@@ -132,7 +135,9 @@ export function ActivationTour({ orgName }: { orgName: string }) {
                   onClick={() => go(i)}
                   className={cn(
                     "h-1.5 rounded-full transition-all",
-                    i === index ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30",
+                    i === index
+                      ? "w-6 bg-primary"
+                      : "w-1.5 bg-muted-foreground/30",
                   )}
                 />
               ))}
@@ -226,7 +231,10 @@ export function ActivationTour({ orgName }: { orgName: string }) {
         <ul className="mt-5 space-y-2 text-sm">
           {PLAN_FEATURES.map((f) => (
             <li key={f} className="flex items-start gap-2">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <Check
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                aria-hidden
+              />
               {f}
             </li>
           ))}

@@ -21,11 +21,18 @@ export interface RegisterState {
 }
 
 const registerSchema = z.object({
-  businessName: z.string().trim().min(2, "Nombre del negocio muy corto").max(120),
+  businessName: z
+    .string()
+    .trim()
+    .min(2, "Nombre del negocio muy corto")
+    .max(120),
   ownerName: z.string().trim().min(2, "Ingresa tu nombre").max(120),
   email: z.string().trim().email("Correo inválido").max(160),
   phone: z.string().trim().min(6, "Teléfono inválido").max(30),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").max(200),
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(200),
 });
 
 function slugify(input: string): string {
@@ -89,7 +96,11 @@ export async function registerOrganization(
   });
   if (userErr || !created?.user) {
     const msg = userErr?.message?.toLowerCase() ?? "";
-    if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+    if (
+      msg.includes("already") ||
+      msg.includes("registered") ||
+      msg.includes("exists")
+    ) {
       return { error: "Ya existe una cuenta con ese correo. Inicia sesión." };
     }
     return { error: "No se pudo crear la cuenta. Intenta de nuevo." };

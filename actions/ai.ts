@@ -12,8 +12,7 @@ import { getActiveMembership, hasPaidAccess } from "@/lib/supabase/auth";
  */
 
 export type AIResult =
-  | { ok: true; text: string }
-  | { ok: false; message: string };
+  { ok: true; text: string } | { ok: false; message: string };
 
 const ADVISOR_SYSTEM =
   "Eres un asesor de negocios para un servicentro / autolavado en Costa Rica. " +
@@ -69,7 +68,10 @@ export async function askAssistant(
     // loss. The client refreshes the view itself after the response instead.
     return { ok: true, text };
   } catch {
-    return { ok: false, message: "No se pudo consultar la IA. Intenta de nuevo." };
+    return {
+      ok: false,
+      message: "No se pudo consultar la IA. Intenta de nuevo.",
+    };
   }
 }
 
@@ -92,7 +94,10 @@ export async function generateSummary(): Promise<AIResult> {
     ]);
     return { ok: true, text };
   } catch {
-    return { ok: false, message: "No se pudo generar el resumen. Intenta de nuevo." };
+    return {
+      ok: false,
+      message: "No se pudo generar el resumen. Intenta de nuevo.",
+    };
   }
 }
 
@@ -129,6 +134,9 @@ export async function draftReactivationMessage(
     );
     return { ok: true, text };
   } catch {
-    return { ok: false, message: "No se pudo generar el mensaje. Intenta de nuevo." };
+    return {
+      ok: false,
+      message: "No se pudo generar el mensaje. Intenta de nuevo.",
+    };
   }
 }

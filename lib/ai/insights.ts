@@ -34,7 +34,9 @@ export async function getAtRiskCustomers(
   return items
     .map((item) => {
       const ref = item.lastActivityAt ?? item.joinedAt;
-      const daysSinceLast = Math.floor((now - new Date(ref).getTime()) / DAY_MS);
+      const daysSinceLast = Math.floor(
+        (now - new Date(ref).getTime()) / DAY_MS,
+      );
       return {
         membershipId: item.id,
         name: item.customerFullName,

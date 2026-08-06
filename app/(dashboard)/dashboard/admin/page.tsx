@@ -34,7 +34,8 @@ export default async function SuperadminPage() {
         <h1 className="text-2xl font-bold">Superadmin</h1>
       </div>
       <p className="mb-6 text-sm text-muted-foreground">
-        {orgs.length} servicentro{orgs.length === 1 ? "" : "s"} · {active} activo
+        {orgs.length} servicentro{orgs.length === 1 ? "" : "s"} · {active}{" "}
+        activo
         {active === 1 ? "" : "s"}. Activa un socio cuando su pago caiga.
       </p>
 
@@ -69,7 +70,8 @@ export default async function SuperadminPage() {
                   <span
                     className={cn(
                       "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                      STATUS_STYLE[o.status] ?? "bg-muted text-muted-foreground",
+                      STATUS_STYLE[o.status] ??
+                        "bg-muted text-muted-foreground",
                     )}
                   >
                     {STATUS_LABEL[o.status] ?? o.status}

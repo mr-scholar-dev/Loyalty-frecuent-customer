@@ -36,7 +36,10 @@ export function AdminOrgActions({
   return (
     <div className="flex items-center justify-end gap-2">
       {isPending && (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
+        <Loader2
+          className="h-4 w-4 animate-spin text-muted-foreground"
+          aria-hidden
+        />
       )}
       {error && <span className="text-xs text-destructive">{error}</span>}
       {status !== "active" ? (

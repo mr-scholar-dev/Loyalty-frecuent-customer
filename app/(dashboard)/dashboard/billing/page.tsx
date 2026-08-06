@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BillingButton } from "@/components/dashboard/BillingButton";
-import {
-  PRO_PRICE_USD,
-  PRO_PRICE_USD_ANNUAL,
-  CONTACT_PHONE,
-} from "@/lib/site";
+import { PRO_PRICE_USD, PRO_PRICE_USD_ANNUAL, CONTACT_PHONE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Facturación" };
 export const dynamic = "force-dynamic";
@@ -62,8 +58,7 @@ export default function BillingPage() {
           <BillingButton />
 
           <p className="text-xs text-muted-foreground">
-            ¿Dudas? Escríbenos al{" "}
-            {CONTACT_PHONE}.
+            ¿Dudas? Escríbenos al {CONTACT_PHONE}.
           </p>
         </CardContent>
       </Card>
