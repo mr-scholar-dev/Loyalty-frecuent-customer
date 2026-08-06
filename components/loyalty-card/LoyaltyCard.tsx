@@ -3,6 +3,7 @@ import { MembershipStatus } from "@/types/domain";
 import { formatLastActivity, type CardView } from "@/lib/loyalty/card";
 import { ProgressDots } from "@/components/loyalty-card/ProgressDots";
 import { CardActions } from "@/components/loyalty-card/CardActions";
+import { TokenCopy } from "@/components/loyalty-card/TokenCopy";
 
 interface LoyaltyCardProps {
   card: CardView;
@@ -20,6 +21,9 @@ export function LoyaltyCard({ card, qrSvg, qrPngDataUrl }: LoyaltyCardProps) {
   const { organization, progress } = card;
   const isActive = card.status === MembershipStatus.Active;
   const hasReward = progress.availableRewards > 0;
+  // The card URL is `${base}/c/{token}`; the scan console accepts either the
+  // full link or the bare token.
+  const token = card.cardUrl.split("/").filter(Boolean).pop() ?? "";
 
   return (
     <div className="mx-auto w-full max-w-sm space-y-4">
@@ -98,6 +102,7 @@ export function LoyaltyCard({ card, qrSvg, qrPngDataUrl }: LoyaltyCardProps) {
             <p className="text-center text-[11px] font-medium text-slate-500">
               Muestra este código en el servicentro
             </p>
+            {token && <TokenCopy token={token} />}
           </div>
 
           {/* Footer meta */}
