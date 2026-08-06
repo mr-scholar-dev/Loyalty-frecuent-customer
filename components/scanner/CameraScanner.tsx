@@ -52,6 +52,11 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
     if (!video) return;
 
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setState("unsupported");
+        return;
+      }
+
       if (typeof window !== "undefined" && window.BarcodeDetector) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
@@ -61,23 +66,29 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
         await video.play();
         setState("scanning");
 
-        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-        const tick = async () => {
-          if (doneRef.current) return;
-          try {
-            const codes = await detector.detect(video);
-            const first = codes[0];
-            if (first) {
-              handleHit(first.rawValue);
-              return;
+        try {
+          const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+          const tick = async () => {
+            if (doneRef.current) return;
+            try {
+              const codes = await detector.detect(video);
+              const first = codes[0];
+              if (first) {
+                handleHit(first.rawValue);
+                return;
+              }
+            } catch {
+              // transient detect error — keep trying
             }
-          } catch {
-            // transient detect error — keep trying
-          }
+            rafRef.current = requestAnimationFrame(tick);
+          };
           rafRef.current = requestAnimationFrame(tick);
-        };
-        rafRef.current = requestAnimationFrame(tick);
-        return;
+          return;
+        } catch {
+          // Some browsers expose BarcodeDetector but do not support QR formats.
+          // Release its stream and continue with the ZXing fallback below.
+          stop();
+        }
       }
 
       // Fallback: ZXing.
@@ -105,6 +116,7 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
+          autoPlay
           playsInline
           muted
         />
