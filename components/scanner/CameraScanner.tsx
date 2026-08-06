@@ -10,6 +10,8 @@ interface CameraScannerProps {
 
 type CameraState = "idle" | "starting" | "scanning" | "denied" | "unsupported";
 
+const CAMERA_START_TIMEOUT_MS = 12_000;
+
 /**
  * Camera QR scanner (§7, §Fase6). Prefers the native `BarcodeDetector` when
  * available, otherwise falls back to `@zxing/browser`. Handles denied
@@ -95,20 +97,28 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
 
       // Fallback: ZXing.
       const reader = new BrowserQRCodeReader();
-      setState("scanning");
-      controlsRef.current = await reader.decodeFromConstraints(
-        {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
+      const constraints = {
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
+      };
+      const startPromise = reader.decodeFromConstraints(
+        constraints,
         video,
         (result) => {
           if (result) handleHit(result.getText());
         },
       );
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(
+          () => reject(new Error("La cámara tardó demasiado en iniciar.")),
+          CAMERA_START_TIMEOUT_MS,
+        );
+      });
+      controlsRef.current = await Promise.race([startPromise, timeoutPromise]);
+      setState("scanning");
     } catch (err) {
       stop();
       const denied =
@@ -145,7 +155,8 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
             {state === "unsupported" && (
               <>
                 <CameraOff className="h-6 w-6" aria-hidden />
-                No se pudo iniciar la cámara. Usa la entrada manual.
+                No se pudo iniciar. Verifica HTTPS y el permiso de cámara en tu
+                navegador. Usa la entrada manual si continúa.
               </>
             )}
             {state === "idle" && <span>Cámara detenida</span>}
