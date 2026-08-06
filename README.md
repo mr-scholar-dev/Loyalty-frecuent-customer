@@ -47,6 +47,7 @@ Verifica la salud del servicio: `GET http://localhost:3000/api/health`.
 | `pnpm test:e2e`     | Playwright (E2E)                          |
 | `pnpm format`       | Prettier (escribe)                        |
 | `pnpm format:check` | Prettier (verifica)                       |
+| `pnpm check`        | Todo lo anterior en serie, antes de subir |
 
 ## Supabase local
 
