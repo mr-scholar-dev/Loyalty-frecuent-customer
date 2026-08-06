@@ -54,7 +54,8 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
     if (!video) return;
 
     try {
-      if (!navigator.mediaDevices?.getUserMedia) {
+      // getUserMedia only exists in secure contexts (HTTPS or localhost).
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         setState("unsupported");
         return;
       }
@@ -96,7 +97,6 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
       }
 
       // Fallback: ZXing.
-      const reader = new BrowserQRCodeReader();
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: "environment" },
@@ -105,18 +105,36 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
         },
       });
       streamRef.current = stream;
-      video.srcObject = stream;
-      await video.play();
+
+      // Show the live preview as soon as frames flow, without waiting for
+      // ZXing's start promise.
+      video.addEventListener(
+        "playing",
+        () => {
+          if (!doneRef.current) setState("scanning");
+        },
+        { once: true },
+      );
+
+      // Let ZXing attach the stream and start playback itself. Attaching it
+      // to the <video> ourselves first leaves ZXing waiting forever for
+      // media events that already fired (infinite "starting" on phones).
+      const reader = new BrowserQRCodeReader();
       const startPromise = reader.decodeFromStream(stream, video, (result) => {
         if (result) handleHit(result.getText());
       });
+      let timeoutId: number | undefined;
       const timeoutPromise = new Promise<never>((_, reject) => {
-        window.setTimeout(
+        timeoutId = window.setTimeout(
           () => reject(new Error("La cámara tardó demasiado en iniciar.")),
           CAMERA_START_TIMEOUT_MS,
         );
       });
-      controlsRef.current = await Promise.race([startPromise, timeoutPromise]);
+      try {
+        controlsRef.current = await Promise.race([startPromise, timeoutPromise]);
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
       setState("scanning");
     } catch (err) {
       stop();

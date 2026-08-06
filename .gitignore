@@ -35,3 +35,6 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 *.tsbuildinfo
+
+# Local dev TLS certs (generated, never commit)
+certificates/

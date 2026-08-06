@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:https": "next dev --experimental-https --experimental-https-key certificates/dev-key.pem --experimental-https-cert certificates/dev-cert.pem --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
