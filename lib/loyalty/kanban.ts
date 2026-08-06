@@ -8,12 +8,25 @@ import { getActiveMembership } from "@/lib/supabase/auth";
  * The board is created lazily on first visit with three default columns.
  */
 
+export const KANBAN_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
+export type KanbanPriority = (typeof KANBAN_PRIORITIES)[number];
+
+export function isKanbanPriority(v: unknown): v is KanbanPriority {
+  return (
+    typeof v === "string" &&
+    (KANBAN_PRIORITIES as readonly string[]).includes(v)
+  );
+}
+
 export interface KanbanCard {
   id: string;
   title: string;
   description: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
+  priority: KanbanPriority | null;
+  /** ISO date (yyyy-mm-dd) or null. */
+  dueDate: string | null;
 }
 export interface KanbanColumn {
   id: string;
@@ -53,6 +66,42 @@ async function getMembers(orgId: string): Promise<KanbanMember[]> {
   }));
 }
 
+interface CardRow {
+  id: string;
+  title: string;
+  description: string | null;
+  column_id: string;
+  assignee_id: string | null;
+  priority?: string | null;
+  due_date?: string | null;
+}
+
+const CARD_COLUMNS = "id, title, description, column_id, position, assignee_id";
+
+/**
+ * Cards for an organization. `priority`/`due_date` arrive with a later
+ * migration, so a database that predates it retries without them rather than
+ * failing the whole board.
+ */
+async function selectCards(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+): Promise<CardRow[]> {
+  const withFields = await supabase
+    .from("kanban_cards")
+    .select(`${CARD_COLUMNS}, priority, due_date`)
+    .eq("organization_id", orgId)
+    .order("position", { ascending: true });
+  if (!withFields.error) return (withFields.data ?? []) as CardRow[];
+
+  const legacy = await supabase
+    .from("kanban_cards")
+    .select(CARD_COLUMNS)
+    .eq("organization_id", orgId)
+    .order("position", { ascending: true });
+  return (legacy.data ?? []) as CardRow[];
+}
+
 export async function getBoard(): Promise<KanbanBoardView | null> {
   const membership = await getActiveMembership();
   if (!membership) return null;
@@ -86,23 +135,19 @@ export async function getBoard(): Promise<KanbanBoardView | null> {
   }
   if (!board) return null;
 
-  const [{ data: columns }, { data: cards }, members] = await Promise.all([
+  const [{ data: columns }, cards, members] = await Promise.all([
     supabase
       .from("kanban_columns")
       .select("id, name, position")
       .eq("board_id", board.id)
       .order("position", { ascending: true }),
-    supabase
-      .from("kanban_cards")
-      .select("id, title, description, column_id, position, assignee_id")
-      .eq("organization_id", orgId)
-      .order("position", { ascending: true }),
+    selectCards(supabase, orgId),
     getMembers(orgId),
   ]);
 
   const nameById = new Map(members.map((m) => [m.id, m.name]));
   const cardsByColumn = new Map<string, KanbanCard[]>();
-  for (const c of cards ?? []) {
+  for (const c of cards) {
     const list = cardsByColumn.get(c.column_id) ?? [];
     list.push({
       id: c.id,
@@ -112,6 +157,8 @@ export async function getBoard(): Promise<KanbanBoardView | null> {
       assigneeName: c.assignee_id
         ? (nameById.get(c.assignee_id) ?? null)
         : null,
+      priority: isKanbanPriority(c.priority) ? c.priority : null,
+      dueDate: typeof c.due_date === "string" ? c.due_date : null,
     });
     cardsByColumn.set(c.column_id, list);
   }

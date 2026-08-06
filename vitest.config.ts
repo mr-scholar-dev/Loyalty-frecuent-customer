@@ -18,6 +18,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./", import.meta.url)),
+      // jsdom resolves `server-only` to its throwing client build; the stub
+      // lets server modules be unit-tested without weakening the real builds.
+      "server-only": fileURLToPath(
+        new URL("./tests/stubs/server-only.ts", import.meta.url),
+      ),
     },
   },
 });

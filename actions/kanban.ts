@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveMembership, hasPaidAccess } from "@/lib/supabase/auth";
+import type { KanbanPriority } from "@/lib/loyalty/kanban";
 
 /**
  * Kanban actions. Run under the user's session — RLS scopes everything to the
@@ -88,21 +89,46 @@ export async function moveCard(
 
 export async function updateCard(
   cardId: string,
-  patch: { title: string; description: string; assigneeId: string | null },
+  patch: {
+    title: string;
+    description: string;
+    assigneeId: string | null;
+    priority?: KanbanPriority | null;
+    dueDate?: string | null;
+  },
 ): Promise<KanbanResult> {
   if (!patch.title.trim())
     return { ok: false, message: "El título es obligatorio." };
   const supabase = await createClient();
+  const base = {
+    title: patch.title.trim(),
+    description: patch.description.trim() || null,
+    assignee_id: patch.assigneeId,
+  };
   const { data, error } = await supabase
     .from("kanban_cards")
     .update({
-      title: patch.title.trim(),
-      description: patch.description.trim() || null,
-      assignee_id: patch.assigneeId,
+      ...base,
+      priority: patch.priority ?? null,
+      due_date: patch.dueDate || null,
     })
     .eq("id", cardId)
     .select("id");
-  if (error || !data?.length)
+
+  if (error) {
+    // Database predating the priority/due-date migration: save the rest rather
+    // than losing the user's edit.
+    const legacy = await supabase
+      .from("kanban_cards")
+      .update(base)
+      .eq("id", cardId)
+      .select("id");
+    if (legacy.error || !legacy.data?.length)
+      return { ok: false, message: "No se pudo actualizar la tarjeta." };
+    revalidatePath("/dashboard/kanban");
+    return { ok: true };
+  }
+  if (!data?.length)
     return { ok: false, message: "No se pudo actualizar la tarjeta." };
   revalidatePath("/dashboard/kanban");
   return { ok: true };

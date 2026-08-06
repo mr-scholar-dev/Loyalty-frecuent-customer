@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
-import { Loader2, Send, Sparkles, X } from "lucide-react";
-import { askAssistant } from "@/actions/ai";
+import { usePathname } from "next/navigation";
+import { Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { AssistantChat } from "@/components/dashboard/AssistantChat";
 
 /**
  * Global AI copilot: a top-bar launcher + right-side drawer available on every
@@ -99,11 +98,6 @@ function pageInfo(pathname: string): PageInfo {
   );
 }
 
-interface Turn {
-  role: "user" | "assistant";
-  content: string;
-}
-
 export function Copilot() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -141,17 +135,6 @@ function CopilotDrawer({
   suggestions: string[];
   onClose: () => void;
 }) {
-  const [turns, setTurns] = useState<Turn[]>([]);
-  const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [turns, isPending]);
-
   // Close on Escape.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -160,25 +143,6 @@ function CopilotDrawer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
-
-  function ask(question: string) {
-    const q = question.trim();
-    if (!q || isPending) return;
-    setError(null);
-    setInput("");
-    setTurns((t) => [...t, { role: "user", content: q }]);
-    startTransition(async () => {
-      const res = await askAssistant(q, pageLabel);
-      if (res.ok) {
-        setTurns((t) => [...t, { role: "assistant", content: res.text }]);
-        // Refresh the page behind the panel so any change the assistant made
-        // (e.g. a new Kanban task) shows immediately.
-        router.refresh();
-      } else {
-        setError(res.message);
-      }
-    });
-  }
 
   return createPortal(
     // Non-modal: the wrapper ignores pointer events so the app behind stays
@@ -205,85 +169,13 @@ function CopilotDrawer({
           </button>
         </header>
 
-        <div
-          ref={scrollRef}
-          className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
-        >
-          {turns.length === 0 ? (
-            <div className="flex h-full flex-col justify-center gap-4 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Sparkles className="h-6 w-6" aria-hidden />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Puedo consultar tu negocio y ejecutar acciones. Prueba con:
-              </p>
-              <div className="flex flex-col gap-2 text-left">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => ask(s)}
-                    className="rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            turns.map((t, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "flex",
-                  t.role === "user" ? "justify-end" : "justify-start",
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm",
-                    t.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "border bg-muted/40",
-                  )}
-                >
-                  {t.content}
-                </div>
-              </div>
-            ))
-          )}
-          {isPending && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Pensando…
-            </div>
-          )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            ask(input);
-          }}
-          className="flex shrink-0 gap-2 border-t p-3"
-        >
-          <input
-            autoFocus
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          <AssistantChat
+            pageContext={pageLabel}
+            suggestions={suggestions}
             placeholder={`Pide algo sobre ${pageLabel.toLowerCase()}…`}
-            className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={isPending}
           />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={isPending || !input.trim()}
-          >
-            <Send className="h-4 w-4" aria-hidden />
-          </Button>
-        </form>
+        </div>
       </aside>
     </div>,
     document.body,

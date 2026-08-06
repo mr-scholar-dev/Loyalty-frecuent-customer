@@ -6,32 +6,24 @@ import {
   Copy,
   Loader2,
   MessageCircle,
-  Send,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
 import type { AtRiskCustomer } from "@/lib/ai/insights";
 import type { DashboardCounts } from "@/lib/ai/insights";
-import {
-  askAssistant,
-  draftReactivationMessage,
-  generateSummary,
-} from "@/actions/ai";
+import { draftReactivationMessage, generateSummary } from "@/actions/ai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { AssistantChat } from "@/components/dashboard/AssistantChat";
+import { NumberTicker } from "@/components/motion/NumberTicker";
 
 const SUGGESTIONS = [
   "¿Cómo va el negocio este mes?",
   "¿Qué clientes están por dejar de venir?",
-  "Crea una tarea: revisar la bomba de agua, en Por hacer.",
+  "Crea una tarea urgente: revisar la bomba de agua, para el viernes.",
   "Agenda seguimiento a los clientes en riesgo y asígnalo a Carlos.",
+  "¿Cuántos lavados llevamos hoy y quién está cerca del premio?",
 ];
-
-interface ChatTurn {
-  role: "user" | "assistant";
-  content: string;
-}
 
 /** Turn a normalized CR phone into a wa.me link (best effort). */
 function waLink(phone: string | null, text: string): string | null {
@@ -105,8 +97,13 @@ function CountsRow({ counts }: { counts: DashboardCounts }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {items.map((i) => (
-        <div key={i.label} className="rounded-xl border bg-card p-4">
-          <p className="font-mono text-2xl font-bold">{i.value}</p>
+        <div
+          key={i.label}
+          className="shadow-soft rounded-2xl border bg-card p-4"
+        >
+          <p className="text-2xl font-bold tabular-nums">
+            <NumberTicker value={i.value} />
+          </p>
           <p className="mt-0.5 text-xs text-muted-foreground">{i.label}</p>
         </div>
       ))}
@@ -115,104 +112,23 @@ function CountsRow({ counts }: { counts: DashboardCounts }) {
 }
 
 function Assistant() {
-  const [turns, setTurns] = useState<ChatTurn[]>([]);
-  const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function ask(question: string) {
-    const q = question.trim();
-    if (!q || isPending) return;
-    setError(null);
-    setInput("");
-    setTurns((t) => [...t, { role: "user", content: q }]);
-    startTransition(async () => {
-      const res = await askAssistant(q);
-      if (res.ok) {
-        setTurns((t) => [...t, { role: "assistant", content: res.text }]);
-      } else {
-        setError(res.message);
-      }
-    });
-  }
-
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Sparkles className="h-4 w-4 text-primary" aria-hidden />
           Copiloto — pregunta o pide acciones
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Opera la app por ti: consulta datos, gestiona el tablero, registra
+          movimientos. Lo que borra o reversa te lo pide confirmado.
+        </p>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {turns.length === 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => ask(s)}
-                className="rounded-full border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="max-h-[22rem] space-y-3 overflow-y-auto pr-1">
-            {turns.map((t, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "flex",
-                  t.role === "user" ? "justify-end" : "justify-start",
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm",
-                    t.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "border bg-muted/40",
-                  )}
-                >
-                  {t.content}
-                </div>
-              </div>
-            ))}
-            {isPending && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Pensando…
-              </div>
-            )}
-          </div>
-        )}
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            ask(input);
-          }}
-          className="flex gap-2"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Pregunta sobre tu negocio…"
-            className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={isPending}
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={isPending || !input.trim()}
-          >
-            <Send className="h-4 w-4" aria-hidden />
-          </Button>
-        </form>
+      <CardContent className="flex min-h-0 flex-1 flex-col">
+        <AssistantChat
+          suggestions={SUGGESTIONS}
+          className="max-h-[26rem] min-h-[12rem]"
+        />
       </CardContent>
     </Card>
   );

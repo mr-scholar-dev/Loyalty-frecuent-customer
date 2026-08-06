@@ -68,6 +68,17 @@ const ROLE_PERMISSIONS: Record<MemberRole, ReadonlySet<Permission>> = {
   ]),
 };
 
+/**
+ * Narrow a role coming from the database (typed as plain text) to MemberRole.
+ * Anything unrecognized falls back to the least-privileged role, so a bad or
+ * future value can never widen access.
+ */
+export function toMemberRole(value: string | null | undefined): MemberRole {
+  return value === MemberRole.Owner || value === MemberRole.Manager
+    ? value
+    : MemberRole.Employee;
+}
+
 /** Whether a given organization role holds a permission. */
 export function can(role: MemberRole, permission: Permission): boolean {
   return ROLE_PERMISSIONS[role]?.has(permission) ?? false;
