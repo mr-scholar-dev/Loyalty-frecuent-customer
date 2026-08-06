@@ -41,7 +41,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="flex flex-col border-b bg-card p-3 lg:border-b-0 lg:border-r">
+      <aside className="flex flex-col border-b bg-muted/50 p-3 lg:border-b-0 lg:border-r">
         <Link
           href="/dashboard"
           className="mb-5 hidden items-center gap-2 px-2 pt-1.5 lg:flex"
@@ -106,7 +106,7 @@ export default async function DashboardLayout({
           <SectionBreadcrumb />
           <Copilot />
         </header>
-        <div className="flex-1">{children}</div>
+        <div className="content-stagger flex-1">{children}</div>
       </div>
       <Toaster richColors position="top-center" />
     </div>

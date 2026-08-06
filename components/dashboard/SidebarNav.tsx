@@ -100,16 +100,25 @@ export function SidebarNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0.5",
+                  "group relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0.5",
                   active
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-card text-primary shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-0 top-1/2 hidden h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-primary transition-opacity lg:block",
+                    active ? "opacity-100" : "opacity-0",
+                  )}
+                />
                 <Icon
                   className={cn(
-                    "h-4 w-4 shrink-0",
-                    active ? "text-primary" : "text-muted-foreground/80",
+                    "h-4 w-4 shrink-0 transition-colors",
+                    active
+                      ? "text-primary"
+                      : "text-muted-foreground/80 group-hover:text-foreground",
                   )}
                   aria-hidden
                 />
