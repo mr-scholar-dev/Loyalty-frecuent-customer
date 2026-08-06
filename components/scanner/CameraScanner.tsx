@@ -97,20 +97,19 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
 
       // Fallback: ZXing.
       const reader = new BrowserQRCodeReader();
-      const constraints = {
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
-      };
-      const startPromise = reader.decodeFromConstraints(
-        constraints,
-        video,
-        (result) => {
-          if (result) handleHit(result.getText());
-        },
-      );
+      });
+      streamRef.current = stream;
+      video.srcObject = stream;
+      await video.play();
+      const startPromise = reader.decodeFromStream(stream, video, (result) => {
+        if (result) handleHit(result.getText());
+      });
       const timeoutPromise = new Promise<never>((_, reject) => {
         window.setTimeout(
           () => reject(new Error("La cámara tardó demasiado en iniciar.")),
