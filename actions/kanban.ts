@@ -100,35 +100,19 @@ export async function updateCard(
   if (!patch.title.trim())
     return { ok: false, message: "El título es obligatorio." };
   const supabase = await createClient();
-  const base = {
-    title: patch.title.trim(),
-    description: patch.description.trim() || null,
-    assignee_id: patch.assigneeId,
-  };
   const { data, error } = await supabase
     .from("kanban_cards")
     .update({
-      ...base,
+      title: patch.title.trim(),
+      description: patch.description.trim() || null,
+      assignee_id: patch.assigneeId,
       priority: patch.priority ?? null,
       due_date: patch.dueDate || null,
     })
     .eq("id", cardId)
     .select("id");
 
-  if (error) {
-    // Database predating the priority/due-date migration: save the rest rather
-    // than losing the user's edit.
-    const legacy = await supabase
-      .from("kanban_cards")
-      .update(base)
-      .eq("id", cardId)
-      .select("id");
-    if (legacy.error || !legacy.data?.length)
-      return { ok: false, message: "No se pudo actualizar la tarjeta." };
-    revalidatePath("/dashboard/kanban");
-    return { ok: true };
-  }
-  if (!data?.length)
+  if (error || !data?.length)
     return { ok: false, message: "No se pudo actualizar la tarjeta." };
   revalidatePath("/dashboard/kanban");
   return { ok: true };

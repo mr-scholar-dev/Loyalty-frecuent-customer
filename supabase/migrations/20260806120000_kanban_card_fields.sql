@@ -1,8 +1,8 @@
--- Kanban cards: priority and due date.
+-- Kanban cards: priority and due date. Both optional.
 --
--- Both are optional. The data layer degrades gracefully when this migration has
--- not been applied yet (it retries the select without these columns), so the
--- board keeps working on an older database — the fields simply do not appear.
+-- The enum is the last line of defense on priority: the board offers a fixed
+-- select, but the AI agent writes this column too, and Postgres rejecting an
+-- unknown value beats trusting a language model to stay in the set.
 
 create type public.kanban_priority as enum ('low', 'medium', 'high', 'urgent');
 

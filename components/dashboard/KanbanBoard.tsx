@@ -29,6 +29,7 @@ import {
   moveCard,
   updateCard,
 } from "@/actions/kanban";
+import { parseIsoDate, startOfToday } from "@/lib/loyalty/dates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -69,23 +70,8 @@ function initials(name: string): string {
     .join("");
 }
 
-/** Today at local midnight — the reference for "overdue". */
-function startOfToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-/** Parse a yyyy-mm-dd date as local, not UTC — `new Date("2026-08-06")` is
- * midnight UTC, which lands on the previous day west of Greenwich. */
-function parseDueDate(iso: string): Date | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-}
-
 function dueLabel(iso: string): { text: string; overdue: boolean } | null {
-  const date = parseDueDate(iso);
+  const date = parseIsoDate(iso);
   if (!date) return null;
   const today = startOfToday();
   const days = Math.round((date.getTime() - today.getTime()) / 86_400_000);
@@ -149,7 +135,7 @@ export function KanbanBoard({ board }: { board: KanbanBoardView }) {
       .flatMap((c) => c.cards)
       .filter((card) => {
         if (!card.dueDate) return false;
-        const d = parseDueDate(card.dueDate);
+        const d = parseIsoDate(card.dueDate);
         return d !== null && d.getTime() <= today.getTime();
       }).length;
   }, [columns]);

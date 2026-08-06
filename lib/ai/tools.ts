@@ -8,6 +8,7 @@ import {
   listMemberships,
 } from "@/lib/loyalty/admin-queries";
 import { getBoard, isKanbanPriority } from "@/lib/loyalty/kanban";
+import { toIsoDate } from "@/lib/loyalty/dates";
 import { listTeam } from "@/lib/loyalty/team";
 import { getActiveMembership } from "@/lib/supabase/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -77,6 +78,17 @@ function int(args: Args, key: string): number | null {
 }
 
 const json = (v: unknown): string => JSON.stringify(v);
+
+/**
+ * Models happily emit "el viernes" or "2026-02-31" for a date argument. The
+ * database rejects both, so catch them here and tell the agent what to fix
+ * instead of losing the whole write.
+ */
+const isoDate = toIsoDate;
+
+const BAD_DATE =
+  "Error: la fecha límite debe ser una fecha real en formato AAAA-MM-DD. " +
+  "Convierte la expresión del usuario a esa forma y vuelve a intentarlo.";
 
 // --- shared resolvers -------------------------------------------------------
 
@@ -535,6 +547,10 @@ const CAPABILITIES: Record<string, Capability> = {
       const column = pickColumn(board.columns, str(args, "column"));
       if (!column) return "Error: no se encontró la columna indicada.";
 
+      const rawDate = str(args, "due_date");
+      const dueDate = rawDate ? isoDate(rawDate) : null;
+      if (rawDate && !dueDate) return BAD_DATE;
+
       const assignee = await resolveMember(str(args, "assignee"), ctx.orgId);
       const admin = createAdminClient();
       const { count } = await admin
@@ -543,30 +559,22 @@ const CAPABILITIES: Record<string, Capability> = {
         .eq("column_id", column.id);
 
       const priority = str(args, "priority");
-      const dueDate = str(args, "due_date");
-      const base = {
+      const { error } = await admin.from("kanban_cards").insert({
         column_id: column.id,
         organization_id: ctx.orgId,
         title,
         description: str(args, "description") || null,
         assignee_id: assignee?.id ?? null,
         position: count ?? 0,
-      };
-
-      let { error } = await admin.from("kanban_cards").insert({
-        ...base,
         priority: isKanbanPriority(priority) ? priority : null,
-        due_date: dueDate || null,
+        due_date: dueDate,
       });
-      if (error) {
-        // Database without the priority/due-date migration.
-        ({ error } = await admin.from("kanban_cards").insert(base));
-      }
       if (error) return "Error: no se pudo crear la tarea.";
 
       return (
         `Tarea "${title}" creada en "${column.name}"` +
         (assignee ? ` y asignada a ${assignee.name}` : "") +
+        (dueDate ? ` para el ${dueDate}` : "") +
         "."
       );
     },
@@ -642,12 +650,14 @@ const CAPABILITIES: Record<string, Capability> = {
         patch.priority = priority;
         changes.push(`prioridad → ${priority}`);
       }
-      const dueDate = str(args, "due_date");
-      if (dueDate) {
-        if (/^(ninguna|sin fecha|none)$/i.test(dueDate)) {
+      const rawDate = str(args, "due_date");
+      if (rawDate) {
+        if (/^(ninguna|sin fecha|none)$/i.test(rawDate)) {
           patch.due_date = null;
           changes.push("sin fecha límite");
         } else {
+          const dueDate = isoDate(rawDate);
+          if (!dueDate) return BAD_DATE;
           patch.due_date = dueDate;
           changes.push(`fecha límite → ${dueDate}`);
         }
@@ -658,23 +668,11 @@ const CAPABILITIES: Record<string, Capability> = {
       }
 
       const admin = createAdminClient();
-      let { error } = await admin
+      const { error } = await admin
         .from("kanban_cards")
         .update(patch)
         .eq("id", found.id)
         .eq("organization_id", ctx.orgId);
-      if (error) {
-        // Retry without the fields that need the newer migration.
-        const { priority: _p, due_date: _d, ...legacy } = patch;
-        if (Object.keys(legacy).length === 0) {
-          return "Error: esta base de datos aún no admite prioridad ni fecha límite.";
-        }
-        ({ error } = await admin
-          .from("kanban_cards")
-          .update(legacy)
-          .eq("id", found.id)
-          .eq("organization_id", ctx.orgId));
-      }
       if (error) return "Error: no se pudo actualizar la tarea.";
 
       return `Tarea "${found.title}" actualizada: ${changes.join(", ")}.`;

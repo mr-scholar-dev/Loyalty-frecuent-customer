@@ -72,34 +72,22 @@ interface CardRow {
   description: string | null;
   column_id: string;
   assignee_id: string | null;
-  priority?: string | null;
-  due_date?: string | null;
+  priority: string | null;
+  due_date: string | null;
 }
 
-const CARD_COLUMNS = "id, title, description, column_id, position, assignee_id";
-
-/**
- * Cards for an organization. `priority`/`due_date` arrive with a later
- * migration, so a database that predates it retries without them rather than
- * failing the whole board.
- */
 async function selectCards(
   supabase: Awaited<ReturnType<typeof createClient>>,
   orgId: string,
 ): Promise<CardRow[]> {
-  const withFields = await supabase
+  const { data } = await supabase
     .from("kanban_cards")
-    .select(`${CARD_COLUMNS}, priority, due_date`)
+    .select(
+      "id, title, description, column_id, position, assignee_id, priority, due_date",
+    )
     .eq("organization_id", orgId)
     .order("position", { ascending: true });
-  if (!withFields.error) return (withFields.data ?? []) as CardRow[];
-
-  const legacy = await supabase
-    .from("kanban_cards")
-    .select(CARD_COLUMNS)
-    .eq("organization_id", orgId)
-    .order("position", { ascending: true });
-  return (legacy.data ?? []) as CardRow[];
+  return (data ?? []) as CardRow[];
 }
 
 export async function getBoard(): Promise<KanbanBoardView | null> {
