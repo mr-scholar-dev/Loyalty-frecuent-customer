@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Toaster } from "sonner";
 import { LogOut, ShieldCheck } from "lucide-react";
 import {
   getActiveMembership,
@@ -12,6 +11,8 @@ import { BrandMark } from "@/components/BrandMark";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { SectionBreadcrumb } from "@/components/dashboard/SectionBreadcrumb";
 import { Copilot } from "@/components/dashboard/Copilot";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Toaster } from "@/components/theme/Toaster";
 
 /**
  * Admin shell (§15). Shared navigation + signed-in user chip.
@@ -104,11 +105,14 @@ export default async function DashboardLayout({
             <span className="text-sm font-semibold">Loyalty Web</span>
           </Link>
           <SectionBreadcrumb />
-          <Copilot />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Copilot />
+          </div>
         </header>
         <div className="content-stagger flex-1">{children}</div>
       </div>
-      <Toaster richColors position="top-center" />
+      <Toaster />
     </div>
   );
 }

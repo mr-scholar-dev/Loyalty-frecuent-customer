@@ -35,30 +35,47 @@
     --surface-dark: 210 63% 7%; /* #07131F */
     --surface-dark-foreground: 210 24% 94%;
     --radius: 0.75rem;
+    --shadow-color: 224 50% 8%;
+    --shadow-near: 0.04;
+    --shadow-far: 0.1;
+    --shadow-spread: 0.22;
   }
 
+  /* Dark theme: elevated slate-blue surfaces (canvas darker than cards, the
+     way native app shells read) with a brightened teal that keeps AA contrast
+     on dark. Mirrors the light token set one-for-one. */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --primary: 172 66% 45%;
-    --primary-foreground: 200 100% 8%;
-    --primary-soft: 176 40% 20%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --success: 154 60% 45%;
-    --warning: 34 80% 58%;
-    --info: 213 80% 62%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 222 47% 7%;
+    --foreground: 214 32% 95%;
+    --card: 222 41% 10%;
+    --card-foreground: 214 32% 95%;
+    --primary: 172 74% 42%;
+    --primary-foreground: 200 90% 6%;
+    --primary-soft: 174 45% 16%;
+    --secondary: 220 32% 15%;
+    --secondary-foreground: 214 32% 95%;
+    --muted: 220 32% 14%;
+    --muted-foreground: 216 18% 68%;
+    --accent: 220 30% 17%;
+    --accent-foreground: 214 32% 95%;
+    --success: 154 58% 46%;
+    --warning: 36 82% 58%;
+    --info: 213 82% 62%;
+    /* Lightened past the light-theme value so error text clears AA on the
+       dark card surface. */
+    --destructive: 0 78% 66%;
+    --destructive-foreground: 0 60% 8%;
+    --border: 219 27% 19%;
+    --input: 219 27% 22%;
+    --ring: 172 74% 42%;
+    /* Marketing's dark sections already sit on ink; nudge them so they don't
+       vanish into the canvas. */
+    --surface-dark: 222 44% 9%;
+    --surface-dark-foreground: 214 30% 94%;
+    --shadow-color: 224 60% 2%;
+    --shadow-near: 0.5;
+    --shadow-far: 0.55;
+    --shadow-spread: 0.7;
   }
 }
 
@@ -80,16 +97,17 @@
     background-size: 60px 60px;
   }
 
-  /* Natural, layered depth — soft not harsh. */
+  /* Natural, layered depth — soft not harsh. `--shadow-color` darkens on the
+     dark theme, where a light-theme shadow would be invisible. */
   .shadow-soft {
     box-shadow:
-      0 1px 2px hsl(220 48% 8% / 0.04),
-      0 6px 16px -8px hsl(220 48% 8% / 0.1);
+      0 1px 2px hsl(var(--shadow-color) / var(--shadow-near)),
+      0 6px 16px -8px hsl(var(--shadow-color) / var(--shadow-far));
   }
   .shadow-float {
     box-shadow:
-      0 1px 2px hsl(220 48% 8% / 0.05),
-      0 16px 44px -16px hsl(220 48% 8% / 0.22);
+      0 1px 2px hsl(var(--shadow-color) / var(--shadow-near)),
+      0 16px 44px -16px hsl(var(--shadow-color) / var(--shadow-spread));
   }
   /* Very light glass — only where it earns its place. */
   .glass {
