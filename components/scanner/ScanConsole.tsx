@@ -1,15 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  CheckCircle2,
-  Gift,
-  Loader2,
-  Search,
-  ShieldAlert,
-  Trophy,
-  XCircle,
-} from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
+import { Gift, Loader2, Search, ShieldAlert, Trophy } from "lucide-react";
 import type {
   MutationResult,
   StaffMembershipView,
@@ -27,9 +22,7 @@ import { ProgressDots } from "@/components/loyalty-card/ProgressDots";
 import { CameraScanner } from "@/components/scanner/CameraScanner";
 
 type Receipt = {
-  kind: "success" | "error";
   message: string;
-  celebrate?: boolean;
 };
 type PendingAction = "visit" | "redeem" | null;
 
@@ -58,6 +51,18 @@ export function ScanConsole() {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [confirming, setConfirming] = useState<PendingAction>(null);
   const [isPending, startTransition] = useTransition();
+  const reduceMotion = useReducedMotion();
+
+  function fireConfetti() {
+    if (reduceMotion) return;
+    confetti({
+      particleCount: 110,
+      spread: 75,
+      startVelocity: 32,
+      origin: { y: 0.35 },
+      colors: ["#087F78", "#DDF5F1", "#0B1220", "#D98B22"],
+    });
+  }
 
   function doLookup(raw: string) {
     const query = raw.trim();
@@ -86,18 +91,21 @@ export function ScanConsole() {
         setView(result.view);
         const rewardMoment =
           action === "redeem" || (action === "visit" && result.rewardEarned);
-        setReceipt({
-          kind: "success",
-          celebrate: rewardMoment,
-          message:
-            action === "visit"
-              ? result.rewardEarned
+        if (rewardMoment) {
+          fireConfetti();
+          setReceipt({
+            message:
+              action === "visit"
                 ? "¡Recompensa desbloqueada!"
-                : `Lavado registrado. Progreso ${result.view.progress.current}/${result.view.progress.required}.`
-              : "Recompensa canjeada",
-        });
+                : "Recompensa canjeada",
+          });
+        } else {
+          toast.success(
+            `Lavado registrado. Progreso ${result.view.progress.current}/${result.view.progress.required}.`,
+          );
+        }
       } else {
-        setReceipt({ kind: "error", message: ERROR_MESSAGES[result.reason] });
+        toast.error(ERROR_MESSAGES[result.reason]);
       }
     });
   }
@@ -150,7 +158,12 @@ export function ScanConsole() {
 
       {/* Result */}
       {view && (
-        <div className="space-y-4 rounded-xl border bg-card p-4">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-4 rounded-xl border bg-card p-4"
+        >
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -245,45 +258,31 @@ export function ScanConsole() {
               </Button>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
-      {/* Receipt */}
-      {receipt &&
-        (receipt.celebrate ? (
-          <div
-            role="status"
-            className="animate-pop flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-6 text-center"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Trophy className="h-6 w-6" aria-hidden />
-            </span>
-            <p className="text-base font-semibold text-primary">
-              {receipt.message}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {receipt.message.includes("desbloqueada")
-                ? "El cliente ya puede canjear su lavado gratis."
-                : "Lavado gratis entregado al cliente."}
-            </p>
-          </div>
-        ) : (
-          <p
-            role="status"
-            className={
-              receipt.kind === "success"
-                ? "flex items-center gap-2 rounded-md bg-success/10 px-3 py-2 text-sm font-medium text-success"
-                : "flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive"
-            }
-          >
-            {receipt.kind === "success" ? (
-              <CheckCircle2 className="h-4 w-4" aria-hidden />
-            ) : (
-              <XCircle className="h-4 w-4" aria-hidden />
-            )}
+      {/* Reward celebration (routine confirmations and errors are toasts). */}
+      {receipt && (
+        <motion.div
+          role="status"
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 320, damping: 22 }}
+          className="flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-6 text-center"
+        >
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Trophy className="h-6 w-6" aria-hidden />
+          </span>
+          <p className="text-base font-semibold text-primary">
             {receipt.message}
           </p>
-        ))}
+          <p className="text-sm text-muted-foreground">
+            {receipt.message.includes("desbloqueada")
+              ? "El cliente ya puede canjear su lavado gratis."
+              : "Lavado gratis entregado al cliente."}
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }

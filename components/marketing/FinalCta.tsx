@@ -2,11 +2,12 @@ import { MessageCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { WHATSAPP_URL } from "@/lib/site";
+import { Reveal } from "@/components/motion/Reveal";
 
 export function FinalCta() {
   return (
     <section className="bg-surface-dark py-20 text-surface-dark-foreground sm:py-28">
-      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
+      <Reveal className="mx-auto max-w-3xl px-4 text-center sm:px-6">
         <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
           Empieza a convertir visitas en relaciones duraderas.
         </h2>
@@ -19,7 +20,10 @@ export function FinalCta() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noreferrer"
-            className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "shimmer w-full sm:w-auto",
+            )}
           >
             Solicitar una demo
           </a>
@@ -36,7 +40,7 @@ export function FinalCta() {
             Hablar por WhatsApp
           </a>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

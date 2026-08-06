@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Toaster } from "sonner";
 import { LogOut, ShieldCheck } from "lucide-react";
 import {
   getActiveMembership,
@@ -107,6 +108,7 @@ export default async function DashboardLayout({
         </header>
         <div className="flex-1">{children}</div>
       </div>
+      <Toaster richColors position="top-center" />
     </div>
   );
 }

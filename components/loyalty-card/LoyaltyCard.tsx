@@ -26,7 +26,7 @@ export function LoyaltyCard({ card, qrSvg, qrPngDataUrl }: LoyaltyCardProps) {
   const token = card.cardUrl.split("/").filter(Boolean).pop() ?? "";
 
   return (
-    <div className="mx-auto w-full max-w-sm space-y-4">
+    <div className="animate-rise mx-auto w-full max-w-sm space-y-4">
       {/* The card */}
       <div
         className="overflow-hidden rounded-3xl text-white shadow-xl ring-1 ring-black/5"

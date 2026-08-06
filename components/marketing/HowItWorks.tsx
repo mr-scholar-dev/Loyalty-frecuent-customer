@@ -1,3 +1,5 @@
+import { ScrollStagger } from "@/components/motion/ScrollStagger";
+
 const STEPS = [
   {
     title: "Publica tu QR de registro",
@@ -19,8 +21,8 @@ export function HowItWorks() {
       id="como-funciona"
       className="scroll-mt-20 border-b bg-muted/40 py-24 sm:py-28"
     >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl">
+      <ScrollStagger className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="max-w-2xl" data-reveal>
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
             Puesta en marcha
           </p>
@@ -39,7 +41,7 @@ export function HowItWorks() {
             className="absolute left-0 right-0 top-5 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
           />
           {STEPS.map((step, i) => (
-            <li key={step.title} className="relative">
+            <li key={step.title} className="relative" data-reveal>
               <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary bg-background font-mono text-sm font-bold text-primary">
                 {String(i + 1).padStart(2, "0")}
               </div>
@@ -50,7 +52,7 @@ export function HowItWorks() {
             </li>
           ))}
         </ol>
-      </div>
+      </ScrollStagger>
     </section>
   );
 }

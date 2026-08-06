@@ -3,6 +3,7 @@ import { ArrowRight, Check, Gift, QrCode } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { WHATSAPP_URL } from "@/lib/site";
+import { Reveal } from "@/components/motion/Reveal";
 import { ProductPreview } from "./ProductPreview";
 
 const TRUST = [
@@ -20,11 +21,11 @@ export function HeroSection() {
       />
       <div
         aria-hidden
-        className="ambient-primary pointer-events-none absolute inset-0 -z-10"
+        className="aurora pointer-events-none absolute inset-0 -z-10"
       />
 
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:py-28">
-        <div className="animate-rise max-w-lg">
+        <Reveal className="max-w-lg">
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-primary">
             Fidelización para negocios automotrices
           </p>
@@ -42,7 +43,7 @@ export function HeroSection() {
               href="/registro"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "shadow-soft group w-full sm:w-auto",
+                "shadow-soft shimmer group w-full sm:w-auto",
               )}
             >
               Crear mi cuenta
@@ -72,10 +73,10 @@ export function HeroSection() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
 
         {/* Product showcase — dashboard is the absolute protagonist. */}
-        <div className="animate-rise relative [animation-delay:120ms] lg:-mr-6 xl:-mr-16">
+        <Reveal delay={0.15} className="relative lg:-mr-6 xl:-mr-16">
           <ProductPreview compact className="lg:origin-left lg:scale-[1.04]" />
 
           {/* Reward chip (glass, very light). Concept reinforcement only. */}
@@ -123,7 +124,7 @@ export function HeroSection() {
               <QrCode className="h-7 w-7 text-surface-dark-foreground/90" />
             </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

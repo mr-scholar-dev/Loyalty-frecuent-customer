@@ -7,6 +7,7 @@ import {
   LineChart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ScrollStagger } from "@/components/motion/ScrollStagger";
 
 const BENEFITS: { icon: LucideIcon; title: string; text: string }[] = [
   {
@@ -44,8 +45,8 @@ const BENEFITS: { icon: LucideIcon; title: string; text: string }[] = [
 export function BenefitsSection() {
   return (
     <section id="funciones" className="scroll-mt-20 border-b py-24 sm:py-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl">
+      <ScrollStagger className="mx-auto max-w-6xl px-4 sm:px-6" stagger={0.08}>
+        <div className="max-w-2xl" data-reveal>
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
             Para el negocio
           </p>
@@ -58,6 +59,7 @@ export function BenefitsSection() {
           {BENEFITS.map(({ icon: Icon, title, text }) => (
             <div
               key={title}
+              data-reveal
               className="shadow-soft hover:shadow-float group rounded-2xl border bg-card p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -70,7 +72,7 @@ export function BenefitsSection() {
             </div>
           ))}
         </div>
-      </div>
+      </ScrollStagger>
     </section>
   );
 }

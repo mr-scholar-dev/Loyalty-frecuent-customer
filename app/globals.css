@@ -105,6 +105,44 @@
       transparent 70%
     );
   }
+  /* Slow-drifting brand-tinted aurora for the hero. Stays within the muted
+     teal/blue palette; barely-there by design. */
+  .aurora {
+    background:
+      radial-gradient(
+        45% 40% at 18% 22%,
+        hsl(var(--primary) / 0.14),
+        transparent 65%
+      ),
+      radial-gradient(
+        40% 35% at 82% 12%,
+        hsl(var(--info) / 0.1),
+        transparent 65%
+      ),
+      radial-gradient(
+        50% 45% at 60% 85%,
+        hsl(var(--primary) / 0.08),
+        transparent 70%
+      );
+  }
+  /* Light sweep across a primary CTA. Runs only when motion is allowed. */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 32%,
+      hsl(0 0% 100% / 0.3) 50%,
+      transparent 68%
+    );
+    transform: translateX(-100%);
+  }
   /* Fade a texture out toward the edges. */
   .mask-fade-b {
     -webkit-mask-image: linear-gradient(to bottom, black, transparent);
@@ -126,6 +164,28 @@
     /* Elegant confirmation for a reward unlock — a subtle pop, no confetti. */
     .animate-pop {
       animation: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .aurora {
+      animation: aurora-drift 16s ease-in-out infinite alternate;
+    }
+    .shimmer::after {
+      animation: shimmer-sweep 3s ease-in-out infinite;
+    }
+  }
+  @keyframes aurora-drift {
+    from {
+      transform: translate3d(-2%, -1%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(2%, 2%, 0) scale(1.08);
+    }
+  }
+  @keyframes shimmer-sweep {
+    55% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(100%);
     }
   }
   @keyframes pop {

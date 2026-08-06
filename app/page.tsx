@@ -1,3 +1,4 @@
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { CapabilitiesStrip } from "@/components/marketing/CapabilitiesStrip";
@@ -14,22 +15,24 @@ import { SiteFooter } from "@/components/marketing/SiteFooter";
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1">
-        <HeroSection />
-        <CapabilitiesStrip />
-        <ProblemSolution />
-        <HowItWorks />
-        <BenefitsSection />
-        <ProductShowcase />
-        <AiAssistantSection />
-        <SecuritySection />
-        <PricingPreview />
-        <FaqSection />
-        <FinalCta />
-      </main>
-      <SiteFooter />
-    </div>
+    <SmoothScroll>
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="flex-1">
+          <HeroSection />
+          <CapabilitiesStrip />
+          <ProblemSolution />
+          <HowItWorks />
+          <BenefitsSection />
+          <ProductShowcase />
+          <AiAssistantSection />
+          <SecuritySection />
+          <PricingPreview />
+          <FaqSection />
+          <FinalCta />
+        </main>
+        <SiteFooter />
+      </div>
+    </SmoothScroll>
   );
 }
