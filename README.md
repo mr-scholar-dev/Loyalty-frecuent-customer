@@ -94,6 +94,17 @@ Supabase **no** está en el compose; usa la Supabase CLI y apunta
 - Balances y recompensas solo cambian mediante RPC transaccional (Fase 3).
 - Secretos únicamente en variables de entorno; `.env` nunca se commitea.
 
+## Activación y pagos
+
+Stripe no se usa para las ventas nuevas. La sección de precios y el panel
+abren WhatsApp mediante `wa.me` con un mensaje prellenado. Configura
+`NEXT_PUBLIC_WHATSAPP_NUMBER` en formato internacional sin `+`, espacios ni
+guiones, y opcionalmente `NEXT_PUBLIC_WHATSAPP_MESSAGE`.
+
+Flujo operativo: el cliente escribe por WhatsApp, se le comparte SINPE Móvil
+si está en Costa Rica o PayPal.Me/USDT si está fuera, envía el comprobante y un
+superadmin activa manualmente la organización desde el panel administrativo.
+
 ## Roadmap por fases
 
 Fase 0 (esta) → 1 BD + RLS → 2 Auth + orgs → 3 Fidelización → 4 Registro

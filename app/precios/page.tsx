@@ -20,11 +20,11 @@ const faqs = [
   },
   {
     q: "¿Cómo empiezo?",
-    a: "Escríbenos por WhatsApp al +506 6151 1306. Activamos tu servicentro (colores, sucursal y programa) y desde tu panel pagas el plan con tarjeta (Stripe).",
+    a: "Escríbenos por WhatsApp al +506 6151 1306. Te indicamos el método de pago según tu país y activamos manualmente tu servicentro después de validar el comprobante.",
   },
   {
     q: "¿Cómo se paga?",
-    a: "Una vez damos de alta tu servicentro, dentro del panel verás la opción de suscribirte y pagar el plan Pro de forma segura con Stripe.",
+    a: "Si estás en Costa Rica, puedes pagar por SINPE Móvil. Si estás fuera del país, te compartimos PayPal.Me o una billetera de USDT. Envía el comprobante por WhatsApp y activamos tu cuenta manualmente.",
   },
   {
     q: "¿Necesito instalar una app?",
@@ -57,8 +57,9 @@ export default function PreciosPage() {
               <PricingCards />
             </div>
             <p className="mt-6 text-center text-xs text-muted-foreground">
-              Precio en dólares (USD), por servicentro. El pago del plan se
-              realiza dentro del panel una vez activada tu cuenta.
+              Precio en dólares (USD), por servicentro. Para comprar, escríbenos
+              por WhatsApp; te compartiremos el método de pago disponible y
+              activaremos tu cuenta al validar el comprobante.
             </p>
           </div>
         </section>

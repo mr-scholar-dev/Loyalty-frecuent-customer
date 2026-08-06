@@ -9,7 +9,7 @@ import {
 } from "@/lib/site";
 
 const CONTACT_HREF = WHATSAPP_URL;
-const CONTACT_LABEL = "Comunícate con nosotros";
+const CONTACT_LABEL = "Comprar Plan";
 
 interface Plan {
   name: string;
@@ -113,10 +113,10 @@ export function PricingCards() {
               "mt-8 w-full",
             )}
           >
-            {CONTACT_LABEL}
+            {plan.featured ? CONTACT_LABEL : "Hablar con ventas"}
           </a>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            {CONTACT_PHONE}
+            {CONTACT_PHONE} · Pago manual por WhatsApp
           </p>
         </div>
       ))}

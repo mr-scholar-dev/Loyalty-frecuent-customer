@@ -25,7 +25,7 @@ export default function BillingPage() {
     <main className="mx-auto max-w-xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Facturación</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Tu plan y método de pago.
+        Tu plan y método de activación.
       </p>
 
       <Card className="border-primary ring-1 ring-primary/20">
@@ -62,7 +62,7 @@ export default function BillingPage() {
           <BillingButton />
 
           <p className="text-xs text-muted-foreground">
-            El pago se procesa de forma segura con Stripe. ¿Dudas? Escríbenos al{" "}
+            ¿Dudas? Escríbenos al{" "}
             {CONTACT_PHONE}.
           </p>
         </CardContent>

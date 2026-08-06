@@ -1,7 +1,11 @@
 /** Shared site/contact constants. */
-export const WHATSAPP_URL =
-  "https://api.whatsapp.com/qr/XVQ2LBE4NOSXJ1?autoload=1&app_absent=0";
 export const CONTACT_PHONE = "+506 6151 1306";
+const WHATSAPP_NUMBER =
+  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "50661511306";
+const WHATSAPP_MESSAGE =
+  process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE ??
+  "¿Cuáles son los métodos de pago? Me interesa activar el Plan Pro de $65 USD.";
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
 /** Pro plan pricing (USD). */
 export const PRO_PRICE_USD = 65; // por mes
