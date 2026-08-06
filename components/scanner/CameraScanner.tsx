@@ -57,7 +57,9 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
         return;
       }
 
-      if (typeof window !== "undefined" && window.BarcodeDetector) {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (!isMobile && typeof window !== "undefined" && window.BarcodeDetector) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
         });
@@ -94,8 +96,14 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
       // Fallback: ZXing.
       const reader = new BrowserQRCodeReader();
       setState("scanning");
-      controlsRef.current = await reader.decodeFromVideoDevice(
-        undefined,
+      controlsRef.current = await reader.decodeFromConstraints(
+        {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
         video,
         (result) => {
           if (result) handleHit(result.getText());
