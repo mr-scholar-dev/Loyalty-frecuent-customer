@@ -1,37 +1,82 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BrowserQRCodeReader, type IScannerControls } from "@zxing/browser";
+import { BrowserQRCodeReader } from "@zxing/browser";
 import { CameraOff, Loader2 } from "lucide-react";
 
 interface CameraScannerProps {
   onResult: (value: string) => void;
 }
 
-type CameraState = "idle" | "starting" | "scanning" | "denied" | "unsupported";
+type CameraState = "idle" | "starting" | "scanning" | "denied" | "error";
 
-const CAMERA_START_TIMEOUT_MS = 12_000;
+const GET_USER_MEDIA_TIMEOUT_MS = 20_000;
+const VIDEO_START_TIMEOUT_MS = 10_000;
+const SCAN_INTERVAL_MS = 200;
+
+/** Rejects after `ms`, cleaning its timer if the base promise settles first. */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
+  let timeoutId: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() =>
+    window.clearTimeout(timeoutId),
+  );
+}
+
+function describeError(err: unknown): { state: CameraState; detail: string } {
+  if (err instanceof DOMException) {
+    switch (err.name) {
+      case "NotAllowedError":
+      case "SecurityError":
+        return { state: "denied", detail: err.name };
+      case "NotFoundError":
+      case "OverconstrainedError":
+        return {
+          state: "error",
+          detail: `No se encontró una cámara compatible (${err.name}).`,
+        };
+      case "NotReadableError":
+      case "AbortError":
+        return {
+          state: "error",
+          detail: `La cámara está en uso por otra aplicación o pestaña (${err.name}). Ciérrala e intenta de nuevo.`,
+        };
+      default:
+        return { state: "error", detail: `${err.name}: ${err.message}` };
+    }
+  }
+  if (err instanceof Error) return { state: "error", detail: err.message };
+  return { state: "error", detail: "Error desconocido al iniciar la cámara." };
+}
 
 /**
- * Camera QR scanner (§7, §Fase6). Prefers the native `BarcodeDetector` when
- * available, otherwise falls back to `@zxing/browser`. Handles denied
- * permissions gracefully with a message; manual entry is always available.
+ * Camera QR scanner (§7, §Fase6). Owns the full pipeline — getUserMedia,
+ * video playback and a polling decode loop — instead of delegating video
+ * attachment to a library (ZXing's internal attach hangs on several mobile
+ * browsers). Decodes with the native `BarcodeDetector` when available and
+ * falls back to `@zxing/browser` over canvas frames. Surfaces the concrete
+ * failure step/reason so field issues are diagnosable; manual entry is
+ * always available.
  */
 export function CameraScanner({ onResult }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<CameraState>("idle");
-  const controlsRef = useRef<IScannerControls | null>(null);
+  const [detail, setDetail] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
   const doneRef = useRef(false);
+  const sessionRef = useRef(0);
 
   function stop() {
-    controlsRef.current?.stop();
-    controlsRef.current = null;
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
+    sessionRef.current += 1;
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    timerRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    const video = videoRef.current;
+    if (video) video.srcObject = null;
   }
 
   useEffect(() => {
@@ -49,106 +94,115 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
 
   async function start() {
     doneRef.current = false;
+    stop();
+    const session = sessionRef.current;
+    const isStale = () => sessionRef.current !== session;
     setState("starting");
     const video = videoRef.current;
     if (!video) return;
 
     try {
       // getUserMedia only exists in secure contexts (HTTPS or localhost).
-      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        setState("unsupported");
+      if (!window.isSecureContext) {
+        setState("error");
+        setDetail(
+          "La página no se sirve por HTTPS, el navegador bloquea la cámara.",
+        );
+        return;
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setState("error");
+        setDetail("Este navegador no soporta acceso a la cámara.");
         return;
       }
 
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-      if (
-        !isMobile &&
-        typeof window !== "undefined" &&
-        window.BarcodeDetector
-      ) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
-        streamRef.current = stream;
-        video.srcObject = stream;
-        await video.play();
-        setState("scanning");
-
-        try {
-          const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-          const tick = async () => {
-            if (doneRef.current) return;
-            try {
-              const codes = await detector.detect(video);
-              const first = codes[0];
-              if (first) {
-                handleHit(first.rawValue);
-                return;
-              }
-            } catch {
-              // transient detect error — keep trying
-            }
-            rafRef.current = requestAnimationFrame(tick);
-          };
-          rafRef.current = requestAnimationFrame(tick);
-          return;
-        } catch {
-          // Some browsers expose BarcodeDetector but do not support QR formats.
-          // Release its stream and continue with the ZXing fallback below.
-          stop();
-        }
-      }
-
-      // Fallback: ZXing.
-      const stream = await navigator.mediaDevices.getUserMedia({
+      setDetail("Solicitando permiso de cámara…");
+      const streamPromise = navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
       });
+      // If the guard below fires, release the camera whenever the browser
+      // eventually hands it over.
+      streamPromise
+        .then((s) => {
+          if (streamRef.current !== s) s.getTracks().forEach((t) => t.stop());
+        })
+        .catch(() => {});
+      const stream = await withTimeout(
+        streamPromise,
+        GET_USER_MEDIA_TIMEOUT_MS,
+        "El navegador no entregó la cámara (¿permiso pendiente o cámara ocupada?).",
+      );
+      if (isStale()) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       streamRef.current = stream;
 
-      // Show the live preview as soon as frames flow, without waiting for
-      // ZXing's start promise.
-      video.addEventListener(
-        "playing",
-        () => {
-          if (!doneRef.current) setState("scanning");
-        },
-        { once: true },
+      setDetail("Iniciando video…");
+      video.srcObject = stream;
+      await withTimeout(
+        video.play(),
+        VIDEO_START_TIMEOUT_MS,
+        "El video no arrancó. Cierra otras apps que usen la cámara e intenta de nuevo.",
       );
-
-      // Let ZXing attach the stream and start playback itself. Attaching it
-      // to the <video> ourselves first leaves ZXing waiting forever for
-      // media events that already fired (infinite "starting" on phones).
-      const reader = new BrowserQRCodeReader();
-      const startPromise = reader.decodeFromStream(stream, video, (result) => {
-        if (result) handleHit(result.getText());
-      });
-      let timeoutId: number | undefined;
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = window.setTimeout(
-          () => reject(new Error("La cámara tardó demasiado en iniciar.")),
-          CAMERA_START_TIMEOUT_MS,
-        );
-      });
-      try {
-        controlsRef.current = await Promise.race([
-          startPromise,
-          timeoutPromise,
-        ]);
-      } finally {
-        window.clearTimeout(timeoutId);
-      }
+      if (isStale()) return;
       setState("scanning");
+
+      // Decode loop over the live element: native BarcodeDetector when the
+      // browser has it, otherwise ZXing against canvas snapshots.
+      let detector: BarcodeDetector | null = null;
+      if (typeof window.BarcodeDetector === "function") {
+        try {
+          const formats = await window.BarcodeDetector.getSupportedFormats();
+          if (formats.includes("qr_code")) {
+            detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+          }
+        } catch {
+          // Fall through to ZXing.
+        }
+      }
+      const zxing = detector ? null : new BrowserQRCodeReader();
+      const canvas = detector ? null : document.createElement("canvas");
+      const ctx = canvas?.getContext("2d", { willReadFrequently: true });
+
+      const tick = async () => {
+        if (doneRef.current || isStale()) return;
+        if (video.readyState >= 2 && video.videoWidth > 0) {
+          try {
+            if (detector) {
+              const codes = await detector.detect(video);
+              const first = codes[0];
+              if (first) {
+                handleHit(first.rawValue);
+                return;
+              }
+            } else if (zxing && canvas && ctx) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              ctx.drawImage(video, 0, 0);
+              const result = zxing.decodeFromCanvas(canvas);
+              if (result) {
+                handleHit(result.getText());
+                return;
+              }
+            }
+          } catch {
+            // No QR in this frame (ZXing throws NotFound) — keep polling.
+          }
+        }
+        if (doneRef.current || isStale()) return;
+        timerRef.current = window.setTimeout(tick, SCAN_INTERVAL_MS);
+      };
+      timerRef.current = window.setTimeout(tick, SCAN_INTERVAL_MS);
     } catch (err) {
       stop();
-      const denied =
-        err instanceof DOMException &&
-        (err.name === "NotAllowedError" || err.name === "SecurityError");
-      setState(denied ? "denied" : "unsupported");
+      const described = describeError(err);
+      setState(described.state);
+      setDetail(described.detail);
     }
   }
 
@@ -167,20 +221,20 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
             {state === "starting" && (
               <>
                 <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-                Iniciando cámara…
+                {detail || "Iniciando cámara…"}
               </>
             )}
             {state === "denied" && (
               <>
                 <CameraOff className="h-6 w-6" aria-hidden />
-                Permiso de cámara denegado. Usa la entrada manual.
+                Permiso de cámara denegado ({detail}). Habilítalo en la
+                configuración del sitio o usa la entrada manual.
               </>
             )}
-            {state === "unsupported" && (
+            {state === "error" && (
               <>
                 <CameraOff className="h-6 w-6" aria-hidden />
-                No se pudo iniciar. Verifica HTTPS y el permiso de cámara en tu
-                navegador. Usa la entrada manual si continúa.
+                {detail}
               </>
             )}
             {state === "idle" && <span>Cámara detenida</span>}
@@ -205,7 +259,7 @@ export function CameraScanner({ onResult }: CameraScannerProps) {
           onClick={start}
           className="w-full text-sm font-medium text-primary underline underline-offset-4"
         >
-          Escanear con la cámara
+          {state === "starting" ? "Reintentar" : "Escanear con la cámara"}
         </button>
       )}
     </div>
